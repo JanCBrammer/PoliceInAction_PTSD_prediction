@@ -1,0 +1,2 @@
+This repository contains the analysis code for the OSF preregistration
+["Does Pre-Trauma Psychophysiological Threat Reactivity predict Post Traumatic Stress Disorder Symptoms?"](https://osf.io/5k6rx/).
