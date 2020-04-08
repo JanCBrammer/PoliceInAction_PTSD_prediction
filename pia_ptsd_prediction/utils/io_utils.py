@@ -4,25 +4,33 @@ import os
 import glob
 
 
-def get_subjectpath(rootdir, subjdir, subdir, regex):
-    """Search "rootdir\subjdir\subdir" for the file containing the regular
+def get_subjectpath(root, base, subj, sub, regex, silent=True):
+    """Search "root\base\subj\sub" for the file containing the regular
     expession "regex" and return the full path if exaclty one file is found.
     """
 
-    searchpath = os.path.join(rootdir, subjdir, subdir, regex)
+    searchpath = os.path.join(root, base, subj, sub, regex)
     path = glob.glob(searchpath)
     n_files = len(path)
+
     if n_files == 0:
-        print(f"Could not find requested file for {subdir}.")
+        if not silent:
+            print(f"Could not find a file matching {searchpath}.")
     elif n_files > 1:
-        print(f"Found {n_files} files for {subjdir}.")
+        if not silent:
+            print(f"Found {n_files} files matching {searchpath}.")
     elif n_files == 1:
-        return path[0]
+        if not silent:
+            print(f"Found 1 file matching {searchpath}.")
+        path = path[0]
+
+    return path
 
 
-def make_subjectpath(rootdir, subjdir, subdir, filename):
-    """Construct and return the path "rootdir\subjdir\subdir\filename".
+def make_subjectpath(root, base, subj, sub, filename):
+    """Construct and return the path "root\base\subj\sub\filename".
     """
 
-    path = os.path.join(rootdir, subjdir, subdir, filename)
-    return path
+    filename = f"{subj}_{filename}"
+    writepath = os.path.join(root, base, subj, sub, filename)
+    return writepath
