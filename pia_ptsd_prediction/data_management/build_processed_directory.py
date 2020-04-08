@@ -24,6 +24,7 @@ level2 = [["ecg", "balanceboard"],
 
 # Create sub-directory for each subject, containing the nested levels.
 for subject in subjects:
+    print(f"Setting up directory for subject {subject}")
     for l1, l2 in zip(level1, level2):
         if l2:
             for i in l2:
