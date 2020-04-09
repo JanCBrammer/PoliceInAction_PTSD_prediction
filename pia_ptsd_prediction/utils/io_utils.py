@@ -10,8 +10,9 @@ def get_subjectpath(root, base, subj, sub, regex, silent=True):
     """
 
     searchpath = os.path.join(root, base, subj, sub, regex)
-    path = glob.glob(searchpath)
-    n_files = len(path)
+    paths = glob.glob(searchpath)
+    n_files = len(paths)
+    path = []
 
     if n_files == 0:
         if not silent:
@@ -22,7 +23,7 @@ def get_subjectpath(root, base, subj, sub, regex, silent=True):
     elif n_files == 1:
         if not silent:
             print(f"Found 1 file matching {searchpath}.")
-        path = path[0]
+        path = paths[0]
 
     return path
 
