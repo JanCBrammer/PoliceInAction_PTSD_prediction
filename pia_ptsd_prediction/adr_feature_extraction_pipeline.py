@@ -9,10 +9,6 @@ import numpy as np
 All directories must exist (they are not instantiated in the pipeline).
 """
 
-# Subjects 1 trough 427.
-# subjects = [f"subj{str(i).zfill(3)}" for i in np.arange(1, 428)]
-subjects = ["subj001", "foo", "subj002"]
-
 
 def task_ecgpreprocessing(subjects=None):
     """Step 1. Preprocess ECG"""
@@ -73,3 +69,14 @@ def task_ecgpeaks(subjects=None):
 def task_ecgperiod(subjects=None):
     """Step 3. Calculate instantaneous heart period"""
     pass
+
+
+if __name__ == "__main__":
+
+    # Subjects 1 trough 427.
+    # subjects = [f"subj{str(i).zfill(3)}" for i in np.arange(1, 428)]
+    subjects = ["subj001", "foo", "subj002"]
+    tasks = [task_ecgpreprocessing, task_ecgpeaks]
+
+    for task in tasks:
+        task(subjects)
