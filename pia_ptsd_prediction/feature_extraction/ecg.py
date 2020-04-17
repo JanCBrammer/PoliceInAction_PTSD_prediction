@@ -12,7 +12,8 @@ import pandas as pd
 from utils.analysis_utils import (invert_signal, decimate_signal,
                                   interpolate_signal)
 from biopeaks.heart import ecg_peaks, correct_peaks
-from config import ecg_channels, ecg_sfreq_decimated, period_sfreq
+from config import (ecg_channels, ecg_sfreq_original, ecg_sfreq_decimated,
+                    ecg_period_sfreq)
 
 
 def preprocessing(readpath, writepath, show=False):
@@ -21,8 +22,13 @@ def preprocessing(readpath, writepath, show=False):
     ecg = raw.get_data(picks=ecg_channels).ravel()
     sfreq = raw.info["sfreq"]
 
+    # Raise AssertionError for unexpected sampling frequencies.
+    assert sfreq == ecg_sfreq_original, (f"Sampling frequency {sfreq} doesn't"
+                                         " match expected sampling frequency"
+                                         f" {ecg_sfreq_original}.")
+
     # Decimate the ECG from original sampling rate to 500 HZ.
-    decimation_factor = int(np.ceil(sfreq / ecg_sfreq_decimated))
+    decimation_factor = int(np.floor(sfreq / ecg_sfreq_decimated))
     ecg_decimated = decimate_signal(ecg, decimation_factor)
     # Flip the inverted ECG signal (around time axis).
     ecg_inverted = invert_signal(ecg_decimated)
@@ -34,6 +40,7 @@ def preprocessing(readpath, writepath, show=False):
         fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
         sec = np.linspace(0, len(ecg) / sfreq, len(ecg))
         ax0.plot(sec, ecg, label=f"original ({sfreq}Hz)")
+        ax0.set_xlabel("seconds")
         ax0.legend(loc="upper right")
         sec = np.linspace(0, len(ecg_decimated) / ecg_sfreq_decimated,
                           len(ecg_decimated))
@@ -41,6 +48,7 @@ def preprocessing(readpath, writepath, show=False):
                  label=f"downsampled ({ecg_sfreq_decimated}Hz)")
         ax1.plot(sec, ecg_inverted,
                  label=f"flipped ({ecg_sfreq_decimated}Hz)")
+        ax1.set_xlabel("seconds")
         ax1.legend(loc="upper right")
 
 
@@ -64,6 +72,7 @@ def peaks(readpath, writepath, show=False):
                    label="uncorrected R-peaks")
         ax.scatter(sec[peaks_corrected], ecg[peaks_corrected], zorder=4,
                    c="g", marker="x", s=300, label="corrected R-peaks")
+        ax.set_xlabel("seconds")
         ax.legend(loc="upper right")
 
 
@@ -78,7 +87,7 @@ def period(readpath, writepath, show=False):
     # Interpolate instantaneous heart period at 4 Hz. Interpolate up until the
     # last R-peak.
     duration = peaks[-1] / ecg_sfreq_decimated    # in seconds
-    nsamples = int(np.rint(duration * period_sfreq))
+    nsamples = int(np.rint(duration * ecg_period_sfreq))
     period_interpolated = interpolate_signal(peaks, period, nsamples)
 
     pd.Series(period_interpolated).to_csv(writepath, sep="\t", header=False,
@@ -92,5 +101,6 @@ def period(readpath, writepath, show=False):
         sec = np.linspace(0, duration, nsamples)
         ax.plot(sec, period_interpolated,
                 label=("period interpolated between R-peaks at"
-                       f" {period_sfreq}Hz"))
+                       f" {ecg_period_sfreq}Hz"))
+        ax.set_xlabel("seconds")
         ax.legend(loc="upper right")
