@@ -17,7 +17,7 @@ by at most 100 msec).
 '''
 
 sec = 26
-sfreq1 = 12
+sfreq1 = 16
 sfreq2 = 500
 sfreq3 = 5000
 
@@ -28,9 +28,10 @@ x2 = np.linspace(0, sec, sec * sfreq2)
 x3 = np.linspace(0, sec, sec * sfreq3)
 
 # Plot an event occuring at 5.2 seconds.
-eventx1 = np.where(x1 >= 5.2)[0][0]
-eventx2 = np.where(x2 >= 5.2)[0][0]
-eventx3 = np.where(x3 >= 5.2)[0][0]
+eventx = 5.2
+eventx1 = int(np.rint(eventx * sfreq1))
+eventx2 = int(np.rint(eventx * sfreq2))
+eventx3 = int(np.rint(eventx * sfreq3))
 
 fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
 ax0.scatter(x1, np.ones(len(x1)))
