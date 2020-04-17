@@ -72,3 +72,50 @@ def interpolate_signal(peaks, signal, nsamples):
     signal_interpolated = f(samples)
 
     return signal_interpolated
+
+
+def consecutive_samples(signal, condition, min_consecutives):
+    """
+    Parameters
+    ----------
+    signal : array
+        The signal in which to evaluate condition.
+    condition : lambda function
+        The condition to evaluate.
+    min_consecutives : int
+        Minimal number of consecutive samples that need to fulfill the
+        condition.
+    Returns
+    -------
+    begs : array
+        Indices of signal at which the consecutive chunks of samples start that
+        fulfill the condition.
+    ends : array
+        Indices of signal at which the consecutive chunks of samples end that
+        fulfill the condition.
+    n : array
+        Number of samples in each consecutive chunk that fulfills the
+        condition.
+
+    """
+    idcs_bool = condition(signal)    # Boolean array
+    # Find the indices of changes.
+    change = np.diff(idcs_bool)
+    idcs, = change.nonzero()
+
+    idcs += 1    # Get indices following the change.
+
+    if idcs_bool[0]:
+        # If the first sample fulfills the condition, prepend a zero.
+        idcs = np.r_[0, idcs]
+
+    if idcs_bool[-1]:
+        # If the last sample fulfills the condition, append an index
+        # corresponding to the length of signal
+        idcs = np.r_[idcs, idcs_bool.size]
+
+    begs = idcs[0::2]
+    ends = idcs[1::2]
+    n = ends - begs
+
+    return begs, ends, n

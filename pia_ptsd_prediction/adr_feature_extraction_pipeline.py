@@ -139,12 +139,13 @@ if __name__ == "__main__":
 
     # Subjects 1 trough 427.
     # subjects = [f"subj{str(i).zfill(3)}" for i in np.arange(1, 428)]
-    subjects = ["subj001"]#, "foo", "subj002"]
+    subjects = ["subj001", "foo", "subj002"]
     # Functions and their order of execution can be specified in a list.
-    # tasks = [task_ecgpreprocessing,
-    #           task_ecgpeaks,
-    #           task_ecgperiod]
-    tasks = [task_bbpreprocessing]
+    tasks = [task_ecgpreprocessing,
+              task_ecgpeaks,
+              task_ecgperiod,
+              task_bbpreprocessing]
+    # tasks = [task_bbpreprocessing]
 
     for task in tasks:
         task(subjects)
