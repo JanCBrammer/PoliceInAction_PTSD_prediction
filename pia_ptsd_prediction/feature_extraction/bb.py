@@ -9,7 +9,7 @@ import mne
 import numpy as np
 import matplotlib.pyplot as plt
 from config import (bb_channels, bb_sfreq_original, bb_sfreq_decimated,
-                    bb_min_empty)
+                    bb_min_empty, bb_boardlength)
 from utils.analysis_utils import decimate_signal, consecutive_samples
 
 
@@ -40,6 +40,7 @@ def preprocessing(readpath, writepath, show=False):
     min_duration = int(np.ceil(bb_sfreq_decimated * bb_min_empty))
 
     for i in range(bb_mins.size):
+
         def empty(x): return x < bb_mins[i]
         begs, ends, n = consecutive_samples(bb_decimated[i, :],
                                             empty,
@@ -55,23 +56,36 @@ def preprocessing(readpath, writepath, show=False):
         bb_minsconsecutive[i, 0] = beg
         bb_minsconsecutive[i, 1] = end
 
-    # Sum sensors along time axis.
-    bb_channelsum = np.sum(bb_decimated, axis=0)
+    # Calculate weight of the participant.
+    bb_chansum = np.sum(bb_decimated, axis=0)    # collaps sensors along time axis
+    bb_chansum_empty = bb_empty.sum()
+    bb_subjweight = np.median(bb_chansum) - bb_chansum_empty
+
+    assert bb_subjweight > bb_chansum_empty, (f"Subject {bb_subjweight} is not"
+                                              " heavier than empty board"
+                                              f" ({bb_chansum_empty}).")
+
+    # Transform sensor data to millimeter unit.
+    bb_mm = np.subtract(bb_decimated, bb_empty.reshape(-1, 1))
+    bb_mm = bb_mm / bb_subjweight    # scale by subject weight
+    bb_mm = bb_mm * (bb_boardlength / 2)    # express in mm
 
     if show:
-        fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
+        fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
         sec = np.linspace(0, bb_decimated.shape[1] / bb_sfreq_decimated,
                           bb_decimated.shape[1])
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        channames = ["PR", "PL", "AL", "AR"]
 
-        for channel in range(bb_decimated.shape[0]):
-            color = colors[channel]
-            ax0.plot(sec, bb_decimated[channel, :], c=color,
-                     label=f"channel {channel}")
-            ax0.axvspan(xmin=sec[bb_minsconsecutive[channel, 0]],
-                        xmax=sec[bb_minsconsecutive[channel, 1]],
-                        ymin=bb_decimated[channel].min(),
-                        ymax=bb_decimated[channel].max(),
+        for chan in range(bb_decimated.shape[0]):
+            color = colors[chan]
+            channame = channames[chan]
+            ax0.plot(sec, bb_decimated[chan, :], c=color,
+                     label=f"{channame}")
+            ax0.axvspan(xmin=sec[bb_minsconsecutive[chan, 0]],
+                        xmax=sec[bb_minsconsecutive[chan, 1]],
+                        ymin=bb_decimated[chan].min(),
+                        ymax=bb_decimated[chan].max(),
                         color=color, alpha=.2, label="empty")
 
         ax0.hlines(y=bb_empty, xmin=0, xmax=sec[-1],
@@ -79,5 +93,17 @@ def preprocessing(readpath, writepath, show=False):
                    label="empty")
         ax0.legend(loc="upper right")
 
-        ax1.plot(sec, bb_channelsum)
+        ax1.plot(sec, bb_chansum)
+        ax1.axhline(y=bb_subjweight, c="r",
+                    label="subject weight minus board weight")
+        ax1.legend(loc="upper right")
         ax1.set_xlabel("seconds")
+
+        for chan in range(bb_mm.shape[0]):
+            color = colors[chan]
+            channame = channames[chan]
+            ax2.plot(sec, bb_mm[chan, :], c=color,
+                     label=f"{channame}")
+        ax2.legend(loc="upper right")
+        ax2.set_xlabel("seconds")
+        ax2.set_ylabel("millimeters")

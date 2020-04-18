@@ -19,8 +19,9 @@ bb_channels = [1, 2, 3, 4]
 bb_sfreq_original = 2500
 bb_sfreq_decimated = 32    # Hz
 bb_filter_cutoffs = [.01, 10]    # lowcut (highpass) and highcut (lowpass) in Hz
-
 bb_min_empty = 10    # seconds
+# TODO: verify board length!
+bb_boardlength = 425
 
 
 
