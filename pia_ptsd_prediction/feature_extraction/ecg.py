@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 16 12:51:14 2020
-
-@author: Jan C. Brammer <jan.c.brammer@gmail.com>
+author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
-
 import mne
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from utils.analysis_utils import (invert_signal, decimate_signal,
-                                  interpolate_signal)
 from biopeaks.heart import ecg_peaks, correct_peaks
-from config import (ecg_channels, ecg_sfreq_original, ecg_sfreq_decimated,
-                    ecg_period_sfreq)
+from ..utils.analysis_utils import (invert_signal, decimate_signal,
+                                    interpolate_signal)
+from ..config import (ecg_channels, ecg_sfreq_original, ecg_sfreq_decimated,
+                      ecg_period_sfreq)
 
 
-def preprocessing(readpath, writepath, show=False):
+def preprocess(readpath, writepath):
 
     raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
     ecg = raw.get_data(picks=ecg_channels).ravel()
@@ -36,23 +33,24 @@ def preprocessing(readpath, writepath, show=False):
     pd.Series(ecg_inverted).to_csv(writepath, sep="\t", header=False,
                                    index=False, float_format="%.4f")
 
-    if show:
-        fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
-        sec = np.linspace(0, len(ecg) / sfreq, len(ecg))
-        ax0.plot(sec, ecg, label=f"original ({sfreq}Hz)")
-        ax0.set_xlabel("seconds")
-        ax0.legend(loc="upper right")
-        sec = np.linspace(0, len(ecg_decimated) / ecg_sfreq_decimated,
-                          len(ecg_decimated))
-        ax1.plot(sec, ecg_decimated,
-                 label=f"downsampled ({ecg_sfreq_decimated}Hz)")
-        ax1.plot(sec, ecg_inverted,
-                 label=f"flipped ({ecg_sfreq_decimated}Hz)")
-        ax1.set_xlabel("seconds")
-        ax1.legend(loc="upper right")
+    fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
+    sec = np.linspace(0, len(ecg) / sfreq, len(ecg))
+    ax0.plot(sec, ecg, label=f"original ({sfreq}Hz)")
+    ax0.set_xlabel("seconds")
+    ax0.legend(loc="upper right")
+    sec = np.linspace(0, len(ecg_decimated) / ecg_sfreq_decimated,
+                        len(ecg_decimated))
+    ax1.plot(sec, ecg_decimated,
+                label=f"downsampled ({ecg_sfreq_decimated}Hz)")
+    ax1.plot(sec, ecg_inverted,
+                label=f"flipped ({ecg_sfreq_decimated}Hz)")
+    ax1.set_xlabel("seconds")
+    ax1.legend(loc="upper right")
+    
+    return fig
 
 
-def peaks(readpath, writepath, show=False):
+def get_peaks(readpath, writepath):
 
     ecg = np.ravel(pd.read_csv(readpath, sep="\t"))
     # Detect R-peaks.
@@ -64,19 +62,20 @@ def peaks(readpath, writepath, show=False):
     pd.Series(peaks_corrected).to_csv(writepath, sep="\t", header=False,
                                       index=False, float_format="%.4f")
 
-    if show:
-        fig, ax = plt.subplots(nrows=1, ncols=1)
-        sec = np.linspace(0, len(ecg) / ecg_sfreq_decimated, len(ecg))
-        ax.plot(sec, ecg)
-        ax.scatter(sec[peaks], ecg[peaks], zorder=3, c="r", marker="+", s=300,
-                   label="uncorrected R-peaks")
-        ax.scatter(sec[peaks_corrected], ecg[peaks_corrected], zorder=4,
-                   c="g", marker="x", s=300, label="corrected R-peaks")
-        ax.set_xlabel("seconds")
-        ax.legend(loc="upper right")
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    sec = np.linspace(0, len(ecg) / ecg_sfreq_decimated, len(ecg))
+    ax.plot(sec, ecg)
+    ax.scatter(sec[peaks], ecg[peaks], zorder=3, c="r", marker="+", s=300,
+                label="uncorrected R-peaks")
+    ax.scatter(sec[peaks_corrected], ecg[peaks_corrected], zorder=4,
+                c="g", marker="x", s=300, label="corrected R-peaks")
+    ax.set_xlabel("seconds")
+    ax.legend(loc="upper right")
+    
+    return fig
 
 
-def period(readpath, writepath, show=False):
+def get_period(readpath, writepath):
 
     peaks = np.ravel(pd.read_csv(readpath, sep="\t"))
 
@@ -93,14 +92,16 @@ def period(readpath, writepath, show=False):
     pd.Series(period_interpolated).to_csv(writepath, sep="\t", header=False,
                                           index=False, float_format="%.6f")
 
-    if show:
-        fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True)
-        sec = np.linspace(0, duration, peaks[-1])
-        ax.vlines(sec[peaks[:-1]], ymin=min(period), ymax=max(period),
-                  label="R-peaks", alpha=.3, colors="r")
-        sec = np.linspace(0, duration, nsamples)
-        ax.plot(sec, period_interpolated,
-                label=("period interpolated between R-peaks at"
-                       f" {ecg_period_sfreq}Hz"))
-        ax.set_xlabel("seconds")
-        ax.legend(loc="upper right")
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True)
+    sec = np.linspace(0, duration, peaks[-1])
+    ax.vlines(sec[peaks[:-1]], ymin=min(period), ymax=max(period),
+                label="R-peaks", alpha=.3, colors="r")
+    sec = np.linspace(0, duration, nsamples)
+    ax.plot(sec, period_interpolated,
+            label=("period interpolated between R-peaks at"
+                    f" {ecg_period_sfreq}Hz"))
+    ax.set_xlabel("seconds")
+    ax.legend(loc="upper right")
+    
+    return fig
