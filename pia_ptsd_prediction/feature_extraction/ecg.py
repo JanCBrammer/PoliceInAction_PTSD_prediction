@@ -12,7 +12,7 @@ from ..config import (ecg_channels, ecg_sfreq_original, ecg_sfreq_decimated,
                       ecg_period_sfreq)
 
 
-def preprocess(readpath, writepath, logfile=None):
+def preprocess_ecg(readpath, writepath, logfile=None):
 
     raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
     ecg = raw.get_data(picks=ecg_channels).ravel()
@@ -49,7 +49,7 @@ def preprocess(readpath, writepath, logfile=None):
     logfile.savefig(fig)
 
 
-def get_peaks(readpath, writepath, logfile=None):
+def get_peaks_ecg(readpath, writepath, logfile=None):
 
     ecg = np.ravel(pd.read_csv(readpath, sep="\t"))
     # Detect R-peaks.
@@ -74,7 +74,7 @@ def get_peaks(readpath, writepath, logfile=None):
     logfile.savefig(fig)
 
 
-def get_period(readpath, writepath, logfile=None):
+def get_period_ecg(readpath, writepath, logfile=None):
 
     peaks = np.ravel(pd.read_csv(readpath, sep="\t"))
 

@@ -10,7 +10,7 @@ from ..config import (bb_channels, bb_sfreq_original, bb_sfreq_decimated,
 from ..utils.analysis_utils import decimate_signal, consecutive_samples
 
 
-def preprocess(readpath, writepath, logfile=None):
+def preprocess_bb(readpath, writepath, logfile=None):
 
     raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
     bb = raw.get_data(picks=bb_channels)
@@ -109,6 +109,20 @@ def preprocess(readpath, writepath, logfile=None):
     logfile.savefig(fig)
         
 
-
-def get_bodysway(readpath, writepath):
+def get_cop_bb(readpath, writepath, logfile=None):
     pass
+    # ap = 
+    # ml = 
+
+
+
+def get_bodysway_bb(readpath, writepath, logfile=None):
+    pass
+    # sway_ml =
+    # sway_ap =
+    # sway_path =
+
+
+
+
+
