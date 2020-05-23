@@ -13,60 +13,36 @@ rootdir = r"C:\Users\JohnDoe\surfdrive\Beta\PoliceInAction_PTSD_Prediction\data"
 
 taskmatrix = [
  
-{"taskfunc": ecg.preprocess,
-"subjects": ["subj001", "foo"],
-"rootdir": rootdir,
-"readcomponents": {"basedir": r"raw",
-                "subdir": r"shootingtask\physiology",
-                "regex": r"*.vhdr"},
-"writecomponents": {"basedir": r"processed",
-                    "subdir": r"adr\ecg",
-                    "filename": r"ecg_clean.tsv"}
-},
-
-{"taskfunc": ecg.get_peaks,
-"subjects": ["subj001", "foo"],
-"rootdir": rootdir,
-"readcomponents": {"basedir": r"processed",
-                "subdir": r"adr\ecg",
-                "regex": r"*ecg_clean.tsv"},
-"writecomponents": {"basedir": r"processed",
-                    "subdir": r"adr\ecg",
-                    "filename": r"ecg_peaks.tsv"}
-},
-
-{"taskfunc": ecg.get_period,
-"subjects": ["bar", "subj001", "foo"],
-"rootdir": rootdir,
-"readcomponents": {"basedir": r"processed",
-                "subdir": r"adr\ecg",
-                "regex": r"*ecg_peaks.tsv"},
-"writecomponents": {"basedir": r"processed",
-                    "subdir": r"adr\ecg",
-                    "filename": r"ecg_period.tsv"}
-},
-
-# {"taskfunc": bb.preprocess,
-# "subjects": ["foo", "subj001"],
+# {"taskfunc": ecg.preprocess,
+# "subjects": ["subj001", "foo"],
 # "rootdir": rootdir,
-# "readcomponents": {"basedir": r"raw",
-#                 "subdir": r"shootingtask\physiology",
-#                 "regex": r"*.vhdr"},
-# "writecomponents": {"basedir": r"processed",
-#                     "subdir": r"adr\balanceboard",
-#                     "filename": r"bb_clean.tsv"},
-# "show": True},
+# "readpath": r"raw\subj\shootingtask\physiology\*.vhdr",    # generic "subj" placeholder in paths is automatically replaced with subject ID during processing
+# "writepath": r"processed\subj\adr\ecg\ecg_clean.tsv"},
 
-# {"taskfunc": bb.get_bodysway,
-# "subjects": [],
+# {"taskfunc": ecg.get_peaks,
+# "subjects": ["subj001", "subj002", "foo"],
 # "rootdir": rootdir,
-# "readcomponents": {"basedir": r"processed",
-#                 "subdir": r"adr\balanceboard",
-#                 "regex": r"*bb_clean.tsv"},
-# "writecomponents": {"basedir": r"processed",
-#                     "subdir": r"adr\balanceboard",
-#                     "filename": r"bb_bodysway.tsv"},
-# "show": True},
+# "readpath": r"processed\subj\adr\ecg\*ecg_clean.tsv",
+# "writepath": r"processed\subj\adr\ecg\ecg_peaks.tsv"},
+
+# {"taskfunc": ecg.get_period,
+# "subjects": ["bar", "subj001", "foo"],
+# "rootdir": rootdir,
+# "readpath": r"processed\subj\adr\ecg\*ecg_peaks.tsv",
+# "writepath": r"processed\subj\adr\ecg\ecg_period.tsv"}
+
+{"taskfunc": bb.preprocess,
+"subjects": ["foo", "subj001"],
+"rootdir": rootdir,
+"readpath": r"raw\shootingtask\physiology\*.vhdr",
+"writepath": r"processed\adr\balanceboard\bb_clean.tsv"},
+
+{"taskfunc": bb.get_bodysway,
+"subjects": [],
+"rootdir": rootdir,
+"readpath": r"processed\adr\balanceboard\*bb_clean.tsv",
+"writepath": r"processed\adr\balanceboard\bb_bodysway.tsv"},
+
 ]
 
 logpath = Path("C:/Users/JohnDoe/surfdrive/Beta/PoliceInAction_PTSD_Prediction/data/tasklog.pdf")
@@ -76,7 +52,7 @@ with PdfPages(logpath) as logpdf:
         loop_subjects(task["taskfunc"],
                       task["subjects"],
                       task["rootdir"],
-                      task["readcomponents"],
-                      task["writecomponents"],
+                      task["readpath"],
+                      task["writepath"],
                       logpdf)
         

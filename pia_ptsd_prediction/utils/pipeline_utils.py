@@ -1,11 +1,12 @@
 """
 author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
-from .io_utils import search_subjectpath, make_subjectpath
+from pathlib import Path
+from .io_utils import (search_subjectpath, individualize_subjectfilename,
+                       individualize_subjectpath)
 
 
-def loop_subjects(taskfunc, subjects, rootdir, readcomponents, writecomponents,
-                  logfile):
+def loop_subjects(taskfunc, subjects, rootdir, readpath, writepath, logfile):
     """Execute a task for a set of subjects.
 
     Parameters
@@ -16,36 +17,30 @@ def loop_subjects(taskfunc, subjects, rootdir, readcomponents, writecomponents,
         Each element is a string of the format "subj[0-9][0-9][0-9]".
     rootdir : string
         Directory containing the data directories "raw" and a "processed".
-    readcomponents : dict
-        Dictionary containing the arguments for io_utils.search_subjectpath.
-    writecomponents : dict
-        Dictionary containing the arguments for io_utils.make_subjectpath.
+    readpath : dict
+        Path to search the input data for taskfunc. Can contain a glob pattern
+        in the file name.
+    writepath : dict
+        Path for writing the output of taskfunc.
     logfile: PdfPages
         An open PdfPages object.
     """
-    basedir_read = readcomponents["basedir"]
-    subdir_read = readcomponents["subdir"]
-    regex = readcomponents["regex"]
-
-    basedir_write = writecomponents["basedir"]
-    subdir_write = writecomponents["subdir"]
-    filename = writecomponents["filename"]
-
     print(f"Applying {taskfunc.__name__} to {len(subjects)} subjects")
 
     for subject in subjects:
-
-        subjpath_read = search_subjectpath(rootdir, basedir_read, subject,
-                                           subdir_read, regex, silent=False)
+        
+        subj_readpath = individualize_subjectpath(readpath, subject)
+        subj_readpath = Path(rootdir).joinpath(subj_readpath)
+        subj_readpath_match = search_subjectpath(subj_readpath, silent=False)
 
         # Skip subjects for whom no data were found.
-        if not subjpath_read:
+        if not subj_readpath_match:
             print(f"Skipping {subject}.")
             continue
 
-        subjpath_write = make_subjectpath(rootdir, basedir_write, subject,
-                                          subdir_write, filename)
+        subj_writepath = individualize_subjectpath(writepath, subject)
+        subj_writepath = individualize_subjectfilename(subj_writepath, subject)
+        subj_writepath = Path(rootdir).joinpath(subj_writepath)
 
-        fig = taskfunc(subjpath_read, subjpath_write)
-        
-        logfile.savefig(fig)
+        taskfunc(subj_readpath_match, subj_writepath, logfile)
+                

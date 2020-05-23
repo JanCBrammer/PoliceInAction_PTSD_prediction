@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
@@ -13,7 +12,7 @@ from ..config import (ecg_channels, ecg_sfreq_original, ecg_sfreq_decimated,
                       ecg_period_sfreq)
 
 
-def preprocess(readpath, writepath):
+def preprocess(readpath, writepath, logfile=None):
 
     raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
     ecg = raw.get_data(picks=ecg_channels).ravel()
@@ -47,10 +46,10 @@ def preprocess(readpath, writepath):
     ax1.set_xlabel("seconds")
     ax1.legend(loc="upper right")
     
-    return fig
+    logfile.savefig(fig)
 
 
-def get_peaks(readpath, writepath):
+def get_peaks(readpath, writepath, logfile=None):
 
     ecg = np.ravel(pd.read_csv(readpath, sep="\t"))
     # Detect R-peaks.
@@ -72,10 +71,10 @@ def get_peaks(readpath, writepath):
     ax.set_xlabel("seconds")
     ax.legend(loc="upper right")
     
-    return fig
+    logfile.savefig(fig)
 
 
-def get_period(readpath, writepath):
+def get_period(readpath, writepath, logfile=None):
 
     peaks = np.ravel(pd.read_csv(readpath, sep="\t"))
 
@@ -104,4 +103,4 @@ def get_period(readpath, writepath):
     ax.set_xlabel("seconds")
     ax.legend(loc="upper right")
     
-    return fig
+    logfile.savefig(fig)

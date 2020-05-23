@@ -10,7 +10,7 @@ from ..config import (bb_channels, bb_sfreq_original, bb_sfreq_decimated,
 from ..utils.analysis_utils import decimate_signal, consecutive_samples
 
 
-def preprocess(readpath, writepath, show=False):
+def preprocess(readpath, writepath, logfile=None):
 
     raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
     bb = raw.get_data(picks=bb_channels)
@@ -69,46 +69,46 @@ def preprocess(readpath, writepath, show=False):
     pd.DataFrame(bb_mm).T.to_csv(writepath, sep="\t", header=False,    # transpose to change from channels as rows to channels as columns (preserves ordering of channels)
                                  index=False, float_format="%.4f")
 
-    if show:
-        fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
-        sec = np.linspace(0, bb_decimated.shape[1] / bb_sfreq_decimated,
-                          bb_decimated.shape[1])
-        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        channames = ["PR", "PL", "AL", "AR"]
+    fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
+    sec = np.linspace(0, bb_decimated.shape[1] / bb_sfreq_decimated,
+                        bb_decimated.shape[1])
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    channames = ["PR", "PL", "AL", "AR"]
 
-        for chan in range(bb_decimated.shape[0]):
-            color = colors[chan]
-            channame = channames[chan]
-            ax0.plot(sec, bb_decimated[chan, :], c=color,
-                     label=f"{channame}")
-            ax0.axvspan(xmin=sec[bb_minsconsecutive[chan, 0]],
-                        xmax=sec[bb_minsconsecutive[chan, 1]],
-                        ymin=bb_decimated[chan].min(),
-                        ymax=bb_decimated[chan].max(),
-                        color=color, alpha=.2, label="empty")
+    for chan in range(bb_decimated.shape[0]):
+        color = colors[chan]
+        channame = channames[chan]
+        ax0.plot(sec, bb_decimated[chan, :], c=color,
+                    label=f"{channame}")
+        ax0.axvspan(xmin=sec[bb_minsconsecutive[chan, 0]],
+                    xmax=sec[bb_minsconsecutive[chan, 1]],
+                    ymin=bb_decimated[chan].min(),
+                    ymax=bb_decimated[chan].max(),
+                    color=color, alpha=.2, label="empty")
 
-        ax0.hlines(y=bb_empty, xmin=0, xmax=sec[-1],
-                   colors=colors[:bb_mins.size], linestyles="dotted",
-                   label="empty")
-        ax0.legend(loc="upper right")
+    ax0.hlines(y=bb_empty, xmin=0, xmax=sec[-1],
+                colors=colors[:bb_mins.size], linestyles="dotted",
+                label="empty")
+    ax0.legend(loc="upper right")
 
-        ax1.plot(sec, bb_chansum)
-        ax1.axhline(y=bb_subjweight, c="r",
-                    label="subject weight minus board weight")
-        ax1.legend(loc="upper right")
-        ax1.set_xlabel("seconds")
+    ax1.plot(sec, bb_chansum)
+    ax1.axhline(y=bb_subjweight, c="r",
+                label="subject weight minus board weight")
+    ax1.legend(loc="upper right")
+    ax1.set_xlabel("seconds")
 
-        for chan in range(bb_mm.shape[0]):
-            color = colors[chan]
-            channame = channames[chan]
-            ax2.plot(sec, bb_mm[chan, :], c=color,
-                     label=f"{channame}")
-        ax2.legend(loc="upper right")
-        ax2.set_xlabel("seconds")
-        ax2.set_ylabel("millimeters")
+    for chan in range(bb_mm.shape[0]):
+        color = colors[chan]
+        channame = channames[chan]
+        ax2.plot(sec, bb_mm[chan, :], c=color,
+                    label=f"{channame}")
+    ax2.legend(loc="upper right")
+    ax2.set_xlabel("seconds")
+    ax2.set_ylabel("millimeters")
+    
+    logfile.savefig(fig)
         
-        plt.show()
 
 
-def get_bodysway(readpath, writepath, show=False):
+def get_bodysway(readpath, writepath):
     pass
