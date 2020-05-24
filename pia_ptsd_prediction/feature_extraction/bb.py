@@ -5,8 +5,9 @@ import mne
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from biopeaks.filters import butter_bandpass_filter
 from ..config import (bb_channels, bb_sfreq_original, bb_sfreq_decimated,
-                     bb_min_empty, bb_boardlength)
+                      bb_min_empty, bb_boardlength, bb_filter_cutoffs)
 from ..utils.analysis_utils import decimate_signal, consecutive_samples
 
 
@@ -65,8 +66,9 @@ def preprocess_bb(readpath, writepath, logfile=None):
     bb_mm = np.subtract(bb_decimated, bb_empty.reshape(-1, 1))
     bb_mm = bb_mm / bb_subjweight    # scale by subject weight
     bb_mm = bb_mm * (bb_boardlength / 2)    # express in mm
-    
-    pd.DataFrame(bb_mm).T.to_csv(writepath, sep="\t", header=False,    # transpose to change from channels as rows to channels as columns (preserves ordering of channels)
+        
+    pd.DataFrame(bb_mm).T.to_csv(writepath, sep="\t",
+                                 header=["BB1", "BB2", "BB3", "BB4"],    # transpose to change from channels as rows to channels as columns (preserves ordering of channels)
                                  index=False, float_format="%.4f")
 
     fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
@@ -110,10 +112,42 @@ def preprocess_bb(readpath, writepath, logfile=None):
         
 
 def get_cop_bb(readpath, writepath, logfile=None):
-    pass
-    # ap = 
-    # ml = 
+    
+    bb = pd.read_csv(readpath, sep="\t", header=0).to_numpy()
+    
+    ap = (bb[:, 2] + bb[:, 3]) - (bb[:, 0] + bb[:, 1])    # anterior-posterior displacement
+    ml = (bb[:, 0] + bb[:, 3]) - (bb[:, 1] + bb[:, 2])    # medio-lateral displacement
+    
+    ap_filt = butter_bandpass_filter(ap, bb_filter_cutoffs[0],
+                                     bb_filter_cutoffs[1], bb_sfreq_decimated)
+    ml_filt = butter_bandpass_filter(ml, bb_filter_cutoffs[0],
+                                     bb_filter_cutoffs[1], bb_sfreq_decimated)
 
+    pd.DataFrame({"ap_filt": ap_filt,
+                  "ml_filt": ml_filt}).to_csv(writepath, sep="\t", header=True,
+                                              index=False, float_format="%.4f")
+    
+    sec = np.linspace(0, bb.shape[0] / bb_sfreq_decimated, bb.shape[0])
+    fig0, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
+    
+    ax0.plot(sec, ap, label="anterior-posterior displacement")
+    ax0.plot(sec, ap_filt, label="filtered anterior-posterior displacement")
+    ax0.set_ylabel("millimeter")
+    ax0.legend(loc="upper right")
+    
+    ax1.plot(sec, ml, label="medio-lateral displacement")
+    ax1.plot(sec, ml_filt, label="filtered medio-lateral displacement")
+    ax1.set_ylabel("millimeter")
+    ax1.set_xlabel("seconds")
+    ax1.legend(loc="upper right")
+    
+    fig1, ax = plt.subplots()
+    ax.plot(ap_filt, ml_filt)
+    ax.set_xlabel("anterior-posterior displacenment (mm)")
+    ax.set_ylabel("medio-lateral displacenment (mm)")
+
+    logfile.savefig(fig0)
+    logfile.savefig(fig1)
 
 
 def get_bodysway_bb(readpath, writepath, logfile=None):
