@@ -51,7 +51,7 @@ def preprocess_ecg(readpath, writepath, logfile=None):
 
 def get_peaks_ecg(readpath, writepath, logfile=None):
 
-    ecg = np.ravel(pd.read_csv(readpath, sep="\t"))
+    ecg = np.ravel(pd.read_csv(readpath, sep="\t", header=None))
     # Detect R-peaks.
     peaks = ecg_peaks(ecg, ecg_sfreq_decimated)
     # Correct artifacts in peak detection.
@@ -76,7 +76,7 @@ def get_peaks_ecg(readpath, writepath, logfile=None):
 
 def get_period_ecg(readpath, writepath, logfile=None):
 
-    peaks = np.ravel(pd.read_csv(readpath, sep="\t"))
+    peaks = np.ravel(pd.read_csv(readpath, sep="\t", header=None))
 
     # Compute period in milliseconds.
     period = np.ediff1d(peaks, to_begin=0) / ecg_sfreq_decimated * 1000    # make sure period has same number of elements as peaks
