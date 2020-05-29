@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 16 12:51:14 2020
-
 @author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
 
@@ -22,6 +20,4 @@ bb_filter_cutoffs = [.01, 10]    # lowcut (highpass) and highcut (lowpass) in Hz
 bb_min_empty = 10    # seconds
 # TODO: verify board length!
 bb_boardlength = 425
-
-
-
+bb_moving_window = 1    # seconds

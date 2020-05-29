@@ -7,8 +7,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from biopeaks.filters import butter_bandpass_filter
 from ..config import (bb_channels, bb_sfreq_original, bb_sfreq_decimated,
-                      bb_min_empty, bb_boardlength, bb_filter_cutoffs)
-from ..utils.analysis_utils import decimate_signal, consecutive_samples
+                      bb_min_empty, bb_boardlength, bb_filter_cutoffs,
+                      bb_moving_window)
+from ..utils.analysis_utils import (decimate_signal, consecutive_samples,
+                                    cop_radius)
 
 
 def preprocess_bb(readpath, writepath, logfile=None):
@@ -129,12 +131,10 @@ def get_cop_bb(readpath, writepath, logfile=None):
     
     sec = np.linspace(0, bb.shape[0] / bb_sfreq_decimated, bb.shape[0])
     fig0, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
-    
     ax0.plot(sec, ap, label="anterior-posterior displacement")
     ax0.plot(sec, ap_filt, label="filtered anterior-posterior displacement")
     ax0.set_ylabel("millimeter")
     ax0.legend(loc="upper right")
-    
     ax1.plot(sec, ml, label="medio-lateral displacement")
     ax1.plot(sec, ml_filt, label="filtered medio-lateral displacement")
     ax1.set_ylabel("millimeter")
@@ -150,13 +150,68 @@ def get_cop_bb(readpath, writepath, logfile=None):
     logfile.savefig(fig1)
 
 
-def get_bodysway_bb(readpath, writepath, logfile=None):
-    pass
-    # sway_ml =
-    # sway_ap =
-    # sway_path =
-
-
-
-
-
+def get_sway_bb(readpath, writepath, logfile=None):
+    
+    cop = pd.read_csv(readpath, sep="\t", header=0)
+    
+    n_samples = int(np.rint(bb_moving_window * bb_sfreq_decimated))    # width of rolling window in samples
+    
+    # Compute body sway.
+    ap_sway = cop.loc[:, "ap_filt"].rolling(window=n_samples,
+                                            min_periods=n_samples,
+                                            center=True).std()
+    ml_sway = cop.loc[:, "ml_filt"].rolling(window=n_samples,
+                                            min_periods=n_samples,
+                                            center=True).std()
+  
+    # Compute moving average of the center-of-pressure's radial displacement.
+    cop_avg = cop.rolling(window=n_samples, min_periods=n_samples,
+                          center=True).mean()
+    cop_demeaned = cop - cop_avg
+    
+    radius = cop_demeaned.loc[:, "ap_filt"].combine(cop_demeaned.loc[:, "ml_filt"], cop_radius)
+    radius_avg = radius.rolling(window=n_samples, min_periods=n_samples,
+                                center=True).mean()
+    
+    # Compute sway path.
+    ap_path = np.ediff1d(cop.loc[:, "ap_filt"], to_begin=0)**2
+    ml_path = np.ediff1d(cop.loc[:, "ml_filt"], to_begin=0)**2
+    total_path = np.sqrt(ap_path + ml_path)
+    
+    pd.DataFrame({"ap_sway": ap_sway,
+                  "ml_sway": ml_sway,
+                  "radius": radius_avg,
+                  "path": total_path}).to_csv(writepath, sep="\t", header=True,
+                                              index=False, float_format="%.4f")    # NaNs are saved as empty strings
+    
+    sec = cop.index / bb_sfreq_decimated
+    fig0, ax = plt.subplots()
+    ax.set_title(f"moving window of {bb_moving_window} seconds")
+    ax.set_xlabel("seconds")
+    ax.set_ylabel("sway (mm)")
+    ax.plot(sec, ap_sway, label="anterior-posterior sway")
+    ax.plot(sec, ml_sway, label="medio-lateral sway")
+    ax.legend(loc="upper right")
+    
+    fig1, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
+    ax0.set_title("COP")
+    ax1.set_title(f"COP demeaned with moving window of {bb_moving_window} seconds")
+    ax0.plot(sec, cop)
+    ax1.plot(sec, cop_demeaned)
+    
+    fig2, ax = plt.subplots()
+    ax.plot(sec, radius, label="radial displacement of COP")
+    ax.plot(sec, radius_avg, label="radial displacement of COP averaged over"
+            f" moving window of {bb_moving_window} seconds")
+    ax.legend(loc="upper right")
+    
+    fig3, ax = plt.subplots()
+    ax.set_xlabel("seconds")
+    ax.set_ylabel("mm")
+    ax.set_title("Sway path length")
+    ax.plot(sec, total_path)
+    
+    logfile.savefig(fig0)
+    logfile.savefig(fig1)
+    logfile.savefig(fig2)
+    logfile.savefig(fig3)

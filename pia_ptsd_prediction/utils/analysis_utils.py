@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 16 17:54:20 2020
-
 @author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
 
@@ -119,3 +117,24 @@ def consecutive_samples(signal, condition, min_consecutives):
     n = ends - begs
 
     return begs, ends, n
+
+
+def cop_radius(ap_displ, ml_displ):
+    """Compute the radial center-of-pressure displacement.
+
+    Parameters
+    ----------
+    ap_displ : 1D array
+        The anterior-posterior displacement.
+    ml_displ : 1D array
+        The medio-lateral displacement.
+    Returns
+    -------
+    avg_radius : 1D array
+        The radial center-of-pressure displacement of each sample pair in
+        ap_displ and ml_displ.
+    """
+    # Compute radius as Pythagorean hypotenuse (equivalent to vector norm).
+    radius = np.sqrt(ap_displ**2 + ml_displ**2)
+    
+    return radius

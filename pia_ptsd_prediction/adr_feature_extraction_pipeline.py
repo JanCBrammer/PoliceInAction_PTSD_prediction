@@ -13,23 +13,23 @@ rootdir = r"C:\Users\JohnDoe\surfdrive\Beta\PoliceInAction_PTSD_Prediction\data"
 
 taskmatrix = [
  
-{"taskfunc": ecg.preprocess_ecg,
-"subjects": ["subj001", "foo"],
-"rootdir": rootdir,
-"readpath": r"raw\subj\shootingtask\physiology\*.vhdr",    # generic "subj" placeholder in paths is automatically replaced with subject ID during processing
-"writepath": r"processed\subj\adr\ecg\ecg_clean.tsv"},
+# {"taskfunc": ecg.preprocess_ecg,
+# "subjects": ["subj001", "foo"],
+# "rootdir": rootdir,
+# "readpath": r"raw\subj\shootingtask\physiology\*.vhdr",    # generic "subj" placeholder in paths is automatically replaced with subject ID during processing
+# "writepath": r"processed\subj\adr\ecg\ecg_clean.tsv"},
 
-{"taskfunc": ecg.get_peaks_ecg,
-"subjects": ["foo", "bar", "subj001"],
-"rootdir": rootdir,
-"readpath": r"processed\subj\adr\ecg\*ecg_clean.tsv",
-"writepath": r"processed\subj\adr\ecg\ecg_peaks.tsv"},
+# {"taskfunc": ecg.get_peaks_ecg,
+# "subjects": ["foo", "bar", "subj001"],
+# "rootdir": rootdir,
+# "readpath": r"processed\subj\adr\ecg\*ecg_clean.tsv",
+# "writepath": r"processed\subj\adr\ecg\ecg_peaks.tsv"},
 
-{"taskfunc": ecg.get_period_ecg,
-"subjects": ["bar", "subj001", "foo"],
-"rootdir": rootdir,
-"readpath": r"processed\subj\adr\ecg\*ecg_peaks.tsv",
-"writepath": r"processed\subj\adr\ecg\ecg_period.tsv"},
+# {"taskfunc": ecg.get_period_ecg,
+# "subjects": ["bar", "subj001", "foo"],
+# "rootdir": rootdir,
+# "readpath": r"processed\subj\adr\ecg\*ecg_peaks.tsv",
+# "writepath": r"processed\subj\adr\ecg\ecg_period.tsv"}
 
 {"taskfunc": bb.preprocess_bb,
 "subjects": ["subj001"],
@@ -41,6 +41,12 @@ taskmatrix = [
 "subjects": ["subj001"],
 "rootdir": rootdir,
 "readpath": r"processed\subj\adr\balanceboard\*bb_clean.tsv",
+"writepath": r"processed\subj\adr\balanceboard\bb_cop.tsv"},
+
+{"taskfunc": bb.get_sway_bb,
+"subjects": ["subj001"],
+"rootdir": rootdir,
+"readpath": r"processed\subj\adr\balanceboard\*bb_cop.tsv",
 "writepath": r"processed\subj\adr\balanceboard\bb_bodysway.tsv"}
 
 ]
