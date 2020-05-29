@@ -25,7 +25,7 @@ def loop_subjects(taskfunc, subjects, rootdir, readpath, writepath, logfile):
     logfile: PdfPages
         An open PdfPages object.
     """
-    print(f"Applying {taskfunc.__name__} to {len(subjects)} subjects")
+    print(f"Applying {taskfunc.__name__} to {len(subjects)} subjects.")
 
     for subject in subjects:
         
@@ -41,6 +41,8 @@ def loop_subjects(taskfunc, subjects, rootdir, readpath, writepath, logfile):
         subj_writepath = individualize_subjectpath(writepath, subject)
         subj_writepath = individualize_subjectfilename(subj_writepath, subject)
         subj_writepath = Path(rootdir).joinpath(subj_writepath)
+        
+        logfile.attach_note(f"{subject}: {taskfunc.__name__}")
 
         taskfunc(subj_readpath_match, subj_writepath, logfile)
                 
