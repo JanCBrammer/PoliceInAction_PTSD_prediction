@@ -4,6 +4,7 @@ author: Jan C. Brammer <jan.c.brammer@gmail.com>
 All directories must exist (they are not instantiated in the pipeline).
 """
 
+from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
 from pathlib import Path
 from pia_ptsd_prediction.feature_extraction import ecg, bb
@@ -73,7 +74,8 @@ def run_pipeline(pipeline, logfile):
 
 if __name__ == "__main__":
 
-    logpath = Path(DATADIR_PROCESSED).joinpath("log_adr_feature_extraction.pdf")
+    t = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    logpath = Path(DATADIR_PROCESSED).joinpath(f"log_adr_feature_extraction_{t}.pdf")
     with PdfPages(logpath) as logpdf:
 
         run_pipeline(pipeline, logpdf)
