@@ -1,21 +1,41 @@
 """
 author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
+
 import mne
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 from biopeaks.filters import butter_bandpass_filter
-from ..config import (BB_CHANNELS, BB_SFREQ_ORIGINAL, BB_SFREQ_DECIMATED,
-                      BB_MIN_EMPTY, BB_BOARDLENGTH, BB_FILTER_CUTOFFS,
-                      BB_MOVING_WINDOW)
-from ..utils.analysis_utils import (decimate_signal, consecutive_samples,
-                                    cop_radius)
+from pia_ptsd_prediction.utils.analysis_utils import (decimate_signal,
+                                                      consecutive_samples,
+                                                      cop_radius)
+from pia_ptsd_prediction.utils.io_utils import individualize_filename
+from pia_ptsd_prediction.config import (BB_CHANNELS, BB_SFREQ_ORIGINAL,
+                                        BB_SFREQ_DECIMATED, BB_MIN_EMPTY,
+                                        BB_BOARDLENGTH, BB_FILTER_CUTOFFS,
+                                        BB_MOVING_WINDOW)
 
 
-def preprocess_bb(readpath, writepath, logfile=None):
+def preprocess_bb(subject, inputs, outputs, recompute, logfile):
 
-    raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # Boolean indicating if file already exists.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
+    root = inputs["physio_path"][0]
+    filename = inputs["physio_path"][1]
+    physio_path = list(Path(root).joinpath(subject).glob(filename))
+    if len(physio_path) != 1:
+        print(f"Found {len(physio_path)} files: skipping {subject}")
+        return
+
+    raw = mne.io.read_raw_brainvision(*physio_path, preload=False, verbose="error")
     bb = raw.get_data(picks=BB_CHANNELS)
     sfreq = raw.info["sfreq"]
 
@@ -69,30 +89,28 @@ def preprocess_bb(readpath, writepath, logfile=None):
     bb_mm = bb_mm / bb_subjweight    # scale by subject weight
     bb_mm = bb_mm * (BB_BOARDLENGTH / 2)    # express in mm
 
-    pd.DataFrame(bb_mm).T.to_csv(writepath, sep="\t",
+    pd.DataFrame(bb_mm).T.to_csv(save_path, sep="\t",
                                  header=["BB1", "BB2", "BB3", "BB4"],    # transpose to change from channels as rows to channels as columns (preserves ordering of channels)
                                  index=False, float_format="%.4f")
 
     fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
     sec = np.linspace(0, bb_decimated.shape[1] / BB_SFREQ_DECIMATED,
-                        bb_decimated.shape[1])
+                      bb_decimated.shape[1])
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     channames = ["PR", "PL", "AL", "AR"]
 
     for chan in range(bb_decimated.shape[0]):
         color = colors[chan]
         channame = channames[chan]
-        ax0.plot(sec, bb_decimated[chan, :], c=color,
-                    label=f"{channame}")
+        ax0.plot(sec, bb_decimated[chan, :], c=color, label=f"{channame}")
         ax0.axvspan(xmin=sec[bb_minsconsecutive[chan, 0]],
                     xmax=sec[bb_minsconsecutive[chan, 1]],
                     ymin=bb_decimated[chan].min(),
                     ymax=bb_decimated[chan].max(),
                     color=color, alpha=.2, label="empty")
 
-    ax0.hlines(y=bb_empty, xmin=0, xmax=sec[-1],
-                colors=colors[:bb_mins.size], linestyles="dotted",
-                label="empty")
+    ax0.hlines(y=bb_empty, xmin=0, xmax=sec[-1], colors=colors[:bb_mins.size],
+               linestyles="dotted", label="empty")
     ax0.legend(loc="upper right")
 
     ax1.plot(sec, bb_chansum)
@@ -104,18 +122,33 @@ def preprocess_bb(readpath, writepath, logfile=None):
     for chan in range(bb_mm.shape[0]):
         color = colors[chan]
         channame = channames[chan]
-        ax2.plot(sec, bb_mm[chan, :], c=color,
-                    label=f"{channame}")
+        ax2.plot(sec, bb_mm[chan, :], c=color, label=f"{channame}")
     ax2.legend(loc="upper right")
     ax2.set_xlabel("seconds")
     ax2.set_ylabel("millimeters")
 
+    logfile.attach_note(f"{str(save_path)}")
     logfile.savefig(fig)
 
 
-def get_cop_bb(readpath, writepath, logfile=None):
+def get_cop_bb(subject, inputs, outputs, recompute, logfile):
 
-    bb = pd.read_csv(readpath, sep="\t", header=0).to_numpy()
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # Boolean indicating if file already exists.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
+    root = inputs["physio_path"][0]
+    filename = inputs["physio_path"][1]
+    physio_path = list(Path(root).joinpath(subject).glob(filename))
+    if len(physio_path) != 1:
+        print(f"Found {len(physio_path)} files: skipping {subject}")
+        return
+
+    bb = pd.read_csv(*physio_path, sep="\t", header=0).to_numpy()
 
     ap = (bb[:, 2] + bb[:, 3]) - (bb[:, 0] + bb[:, 1])    # anterior-posterior displacement
     ml = (bb[:, 0] + bb[:, 3]) - (bb[:, 1] + bb[:, 2])    # medio-lateral displacement
@@ -126,7 +159,7 @@ def get_cop_bb(readpath, writepath, logfile=None):
                                      BB_FILTER_CUTOFFS[1], BB_SFREQ_DECIMATED)
 
     pd.DataFrame({"ap_filt": ap_filt,
-                  "ml_filt": ml_filt}).to_csv(writepath, sep="\t", header=True,
+                  "ml_filt": ml_filt}).to_csv(save_path, sep="\t", header=True,
                                               index=False, float_format="%.4f")
 
     sec = np.linspace(0, bb.shape[0] / BB_SFREQ_DECIMATED, bb.shape[0])
@@ -146,13 +179,29 @@ def get_cop_bb(readpath, writepath, logfile=None):
     ax.set_xlabel("anterior-posterior displacenment (mm)")
     ax.set_ylabel("medio-lateral displacenment (mm)")
 
+    logfile.attach_note(f"{str(save_path)}")
     logfile.savefig(fig0)
     logfile.savefig(fig1)
 
 
-def get_sway_bb(readpath, writepath, logfile=None):
+def get_sway_bb(subject, inputs, outputs, recompute, logfile):
 
-    cop = pd.read_csv(readpath, sep="\t", header=0)
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # Boolean indicating if file already exists.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
+    root = inputs["physio_path"][0]
+    filename = inputs["physio_path"][1]
+    physio_path = list(Path(root).joinpath(subject).glob(filename))
+    if len(physio_path) != 1:
+        print(f"Found {len(physio_path)} files: skipping {subject}")
+        return
+
+    cop = pd.read_csv(*physio_path, sep="\t", header=0)
 
     n_samples = int(np.rint(BB_MOVING_WINDOW * BB_SFREQ_DECIMATED))    # width of rolling window in samples
 
@@ -181,7 +230,7 @@ def get_sway_bb(readpath, writepath, logfile=None):
     pd.DataFrame({"ap_sway": ap_sway,
                   "ml_sway": ml_sway,
                   "radius": radius_avg,
-                  "path": total_path}).to_csv(writepath, sep="\t", header=True,
+                  "path": total_path}).to_csv(save_path, sep="\t", header=True,
                                               index=False, float_format="%.4f")    # NaNs are saved as empty strings
 
     sec = cop.index / BB_SFREQ_DECIMATED
@@ -211,6 +260,7 @@ def get_sway_bb(readpath, writepath, logfile=None):
     ax.set_title("Sway path length")
     ax.plot(sec, total_path)
 
+    logfile.attach_note(f"{str(save_path)}")
     logfile.savefig(fig0)
     logfile.savefig(fig1)
     logfile.savefig(fig2)

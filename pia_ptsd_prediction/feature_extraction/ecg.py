@@ -1,20 +1,39 @@
 """
 author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
+
 import mne
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from biopeaks.heart import ecg_peaks, correct_peaks
-from ..utils.analysis_utils import (invert_signal, decimate_signal,
-                                    interpolate_signal)
-from ..config import (ECG_CHANNELS, ECG_SFREQ_ORIGINAL, ECG_SFREQ_DECIMATED,
-                      ECG_PERIOD_SFREQ)
+from pia_ptsd_prediction.utils.analysis_utils import (invert_signal,
+                                                      decimate_signal,
+                                                      interpolate_signal)
+from pia_ptsd_prediction.utils.io_utils import individualize_filename
+from pia_ptsd_prediction.config import (ECG_CHANNELS, ECG_SFREQ_ORIGINAL,
+                                        ECG_SFREQ_DECIMATED, ECG_PERIOD_SFREQ)
 
 
-def preprocess_ecg(readpath, writepath, logfile=None):
+def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
 
-    raw = mne.io.read_raw_brainvision(readpath, preload=False, verbose="error")
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # Boolean indicating if file already exists.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
+    root = inputs["physio_path"][0]
+    filename = inputs["physio_path"][1]
+    physio_path = list(Path(root).joinpath(subject).glob(filename))
+    if len(physio_path) != 1:
+        print(f"Found {len(physio_path)} files: skipping {subject}")
+        return
+
+    raw = mne.io.read_raw_brainvision(*physio_path, preload=False, verbose="error")
     ecg = raw.get_data(picks=ECG_CHANNELS).ravel()
     sfreq = raw.info["sfreq"]
 
@@ -29,7 +48,7 @@ def preprocess_ecg(readpath, writepath, logfile=None):
     # Flip the inverted ECG signal (around time axis).
     ecg_inverted = invert_signal(ecg_decimated)
 
-    pd.Series(ecg_inverted).to_csv(writepath, sep="\t", header=False,
+    pd.Series(ecg_inverted).to_csv(save_path, sep="\t", header=False,
                                    index=False, float_format="%.4f")
 
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
@@ -38,45 +57,75 @@ def preprocess_ecg(readpath, writepath, logfile=None):
     ax0.set_xlabel("seconds")
     ax0.legend(loc="upper right")
     sec = np.linspace(0, len(ecg_decimated) / ECG_SFREQ_DECIMATED,
-                        len(ecg_decimated))
-    ax1.plot(sec, ecg_decimated,
-                label=f"downsampled ({ECG_SFREQ_DECIMATED}Hz)")
-    ax1.plot(sec, ecg_inverted,
-                label=f"flipped ({ECG_SFREQ_DECIMATED}Hz)")
+                      len(ecg_decimated))
+    ax1.plot(sec, ecg_decimated, label=f"downsampled ({ECG_SFREQ_DECIMATED}Hz)")
+    ax1.plot(sec, ecg_inverted, label=f"flipped ({ECG_SFREQ_DECIMATED}Hz)")
     ax1.set_xlabel("seconds")
     ax1.legend(loc="upper right")
 
+    logfile.attach_note(f"{str(save_path)}")
     logfile.savefig(fig)
 
 
-def get_peaks_ecg(readpath, writepath, logfile=None):
+def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
 
-    ecg = np.ravel(pd.read_csv(readpath, sep="\t", header=None))
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # Boolean indicating if file already exists.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
+    root = inputs["physio_path"][0]
+    filename = inputs["physio_path"][1]
+    physio_path = list(Path(root).joinpath(subject).glob(filename))
+    if len(physio_path) != 1:
+        print(f"Found {len(physio_path)} files: skipping {subject}")
+        return
+
+    ecg = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
     # Detect R-peaks.
     peaks = ecg_peaks(ecg, ECG_SFREQ_DECIMATED)
     # Correct artifacts in peak detection.
     peaks_corrected = correct_peaks(peaks, ECG_SFREQ_DECIMATED,
                                     iterative=True)
     # Save peaks as samples.
-    pd.Series(peaks_corrected).to_csv(writepath, sep="\t", header=False,
+    pd.Series(peaks_corrected).to_csv(save_path, sep="\t", header=False,
                                       index=False, float_format="%.4f")
 
     fig, ax = plt.subplots(nrows=1, ncols=1)
     sec = np.linspace(0, len(ecg) / ECG_SFREQ_DECIMATED, len(ecg))
     ax.plot(sec, ecg)
     ax.scatter(sec[peaks], ecg[peaks], zorder=3, c="r", marker="+", s=300,
-                label="uncorrected R-peaks")
+               label="uncorrected R-peaks")
     ax.scatter(sec[peaks_corrected], ecg[peaks_corrected], zorder=4,
-                c="g", marker="x", s=300, label="corrected R-peaks")
+               c="g", marker="x", s=300, label="corrected R-peaks")
     ax.set_xlabel("seconds")
     ax.legend(loc="upper right")
 
+    logfile.attach_note(f"{str(save_path)}")
     logfile.savefig(fig)
 
 
-def get_period_ecg(readpath, writepath, logfile=None):
+def get_period_ecg(subject, inputs, outputs, recompute, logfile):
 
-    peaks = np.ravel(pd.read_csv(readpath, sep="\t", header=None))
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # Boolean indicating if file already exists.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
+    root = inputs["physio_path"][0]
+    filename = inputs["physio_path"][1]
+    physio_path = list(Path(root).joinpath(subject).glob(filename))
+    if len(physio_path) != 1:
+        print(f"Found {len(physio_path)} files: skipping {subject}")
+        return
+
+    peaks = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
 
     # Compute period in milliseconds.
     period = np.ediff1d(peaks, to_begin=0) / ECG_SFREQ_DECIMATED * 1000    # make sure period has same number of elements as peaks
@@ -88,14 +137,13 @@ def get_period_ecg(readpath, writepath, logfile=None):
     nsamples = int(np.rint(duration * ECG_PERIOD_SFREQ))
     period_interpolated = interpolate_signal(peaks, period, nsamples)
 
-    pd.Series(period_interpolated).to_csv(writepath, sep="\t", header=False,
+    pd.Series(period_interpolated).to_csv(save_path, sep="\t", header=False,
                                           index=False, float_format="%.6f")
-
 
     fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True)
     sec = np.linspace(0, duration, peaks[-1])
     ax.vlines(sec[peaks[:-1]], ymin=min(period), ymax=max(period),
-                label="R-peaks", alpha=.3, colors="r")
+              label="R-peaks", alpha=.3, colors="r")
     sec = np.linspace(0, duration, nsamples)
     ax.plot(sec, period_interpolated,
             label=("period interpolated between R-peaks at"
@@ -103,4 +151,5 @@ def get_period_ecg(readpath, writepath, logfile=None):
     ax.set_xlabel("seconds")
     ax.legend(loc="upper right")
 
+    logfile.attach_note(f"{str(save_path)}")
     logfile.savefig(fig)
