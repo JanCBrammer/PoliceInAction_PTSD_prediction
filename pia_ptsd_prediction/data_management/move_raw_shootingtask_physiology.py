@@ -1,20 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Jan C. Brammer <jan.c.brammer@gmail.com>
+"""
+
 import shutil
-import numpy as np
 from pathlib import Path
+from pia_ptsd_prediction.config import ROOTDIR, SUBJECTS
 
-
-# Define subjects 1 trough 427.
-subjects = [f"subj{str(i).zfill(3)}" for i in np.arange(1, 428)]
 
 irregular_subjects = []
 
 old_dir = Path("...")
 
-for subject in subjects:
+for subject in SUBJECTS:
 
     # Find subject in old directory.
     old_paths = list(old_dir.glob(f"*{subject}*"))
-    new_dir = Path(f"...{subject}/shootingtask/physiology")
+    new_dir = Path(ROOTDIR).joinpath(f"raw/{subject}/shootingtask/physiology")
 
     if old_paths:
         print(f"Copying {len(old_paths)} files for {subject}")

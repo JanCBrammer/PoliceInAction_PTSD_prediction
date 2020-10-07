@@ -3,21 +3,25 @@
 @author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
 
-# ECG configuration ###########################################################
-ecg_channels = ["ECG"]
-ecg_sfreq_original = 2500
-ecg_sfreq_decimated = 500    # Hz
+# General ######################################################################
+ROOTDIR = "C:/Users/JohnDoe/surfdrive/gh_repos/PoliceInAction_PTSD_Prediction/data"
+SUBJECTS = [f"subj{str(i).zfill(3)}" for i in range(1, 428)]    # subjects 1 trough 427
+
+# ECG ##########################################################################
+ECG_CHANNELS = ["ECG"]
+ECG_SFREQ_ORIGINAL = 2500
+ECG_SFREQ_DECIMATED = 500    # Hz
 # The sampling frequency of the heart period must not be too low in order to
 # not loose too much temporal precision during event-related analyses. See
 # `demo_influcence_sfreq_event_timing`.
-ecg_period_sfreq = 16    # Hz
+ECG_PERIOD_SFREQ = 16    # Hz
 
-# Balance-board configuration #################################################
-bb_channels = ["BB1", "BB2", "BB3", "BB4"]
-bb_sfreq_original = 2500
-bb_sfreq_decimated = 32    # Hz
-bb_filter_cutoffs = [.01, 10]    # lowcut (highpass) and highcut (lowpass) in Hz
-bb_min_empty = 10    # seconds
+# Balance-board  ###############################################################
+BB_CHANNELS = ["BB1", "BB2", "BB3", "BB4"]
+BB_SFREQ_ORIGINAL = 2500
+BB_SFREQ_DECIMATED = 32    # Hz
+BB_FILTER_CUTOFFS = [.01, 10]    # lowcut (highpass) and highcut (lowpass) in Hz
+BB_MIN_EMPTY = 10    # seconds
 # TODO: verify board length!
-bb_boardlength = 425
-bb_moving_window = 1    # seconds
+BB_BOARDLENGTH = 425
+BB_MOVING_WINDOW = 1    # seconds

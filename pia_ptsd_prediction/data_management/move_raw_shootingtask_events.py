@@ -1,22 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Jan C. Brammer <jan.c.brammer@gmail.com>
+"""
+
 import shutil
-import numpy as np
 from pathlib import Path
+from pia_ptsd_prediction.config import ROOTDIR, SUBJECTS
 
-
-# Define subjects 1 trough 427.
-subjects = [f"subj{str(i)}" for i in np.arange(1, 428)]
 
 irregular_subjects = []
 
-old_dir = Path("C:/Users/JohnDoe/surfdrive/Beta/wave1_sh_logs")
+old_dir = Path("...")
 
-for subject in subjects:
-    
+for subject in SUBJECTS:
+
     # Find subject in old directory. Since numbers in subject IDs are nor zero padded,
     # only inlude matches that are followed by an underscore or a period.
     old_paths = list(old_dir.glob(f"*{subject}[_.]*"))
     subject_zeropad = f"subj{subject[4:].zfill(3)}"
-    new_dir = Path(f"C:/Users/JohnDoe/surfdrive/Beta/PoliceInAction_PTSD_Prediction/data/raw/{subject_zeropad}/shootingtask/events")
+    new_dir = Path(ROOTDIR).joinpath(f"raw/{subject_zeropad}/shootingtask/events")
 
     if old_paths:
         print(f"Copying {len(old_paths)} files for {subject}")

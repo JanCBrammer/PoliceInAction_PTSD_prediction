@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
+"""
+@author: Jan C. Brammer <jan.c.brammer@gmail.com>
+"""
 
 import os
-import numpy as np
+from pia_ptsd_prediction.config import ROOTDIR, SUBJECTS
 
 
 # Change to top-level directory.
-basedir = r"C:\Users\JohnDoe\surfdrive\Beta\PoliceInAction_PTSD_Prediction\data"
-os.chdir(basedir)
+os.chdir(ROOTDIR)
 
 # Create directory for processed data.
 os.mkdir("processed")
 os.chdir("processed")
-
-# Define subjects 1 trough 427.
-subjects = [f"subj{str(i).zfill(3)}" for i in np.arange(1, 428)]
 
 # Define hierarchy of sub-directories in subject directory.
 level1 = ["adr", "tonic", "pcl", "caps"]
@@ -23,7 +22,7 @@ level2 = [["ecg", "balanceboard"],
           []]
 
 # Create sub-directory for each subject, containing the nested levels.
-for subject in subjects:
+for subject in SUBJECTS:
     print(f"Setting up directory for subject {subject}")
     for l1, l2 in zip(level1, level2):
         if l2:
