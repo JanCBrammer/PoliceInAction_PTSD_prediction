@@ -35,9 +35,7 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
-    if len(physio_path) != 1:
-        print(f"Found {len(physio_path)} files: skipping {subject}")
-        return
+    assert len(physio_path) == 1, f"Found {len(physio_path)} files: skipping {subject}"
 
     raw = mne.io.read_raw_brainvision(*physio_path, preload=False, verbose="error")
     bb = raw.get_data(picks=BB_CHANNELS)
@@ -152,9 +150,7 @@ def get_cop_bb(subject, inputs, outputs, recompute, logfile):
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
-    if len(physio_path) != 1:
-        print(f"Found {len(physio_path)} files: skipping {subject}")
-        return
+    assert len(physio_path) == 1, f"Found {len(physio_path)} files: skipping {subject}"
 
     bb = pd.read_csv(*physio_path, sep="\t", header=0).to_numpy()
 
@@ -211,9 +207,7 @@ def get_sway_bb(subject, inputs, outputs, recompute, logfile):
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
-    if len(physio_path) != 1:
-        print(f"Found {len(physio_path)} files: skipping {subject}")
-        return
+    assert len(physio_path) == 1, f"Found {len(physio_path)} files: skipping {subject}"
 
     cop = pd.read_csv(*physio_path, sep="\t", header=0)
 
