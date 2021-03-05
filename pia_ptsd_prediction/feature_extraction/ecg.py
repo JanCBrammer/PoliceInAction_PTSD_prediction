@@ -17,11 +17,15 @@ from pia_ptsd_prediction.config import (ECG_CHANNELS, ECG_SFREQ_ORIGINAL,
 
 
 def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
+    """Preprocessing of raw ECG from BrainVision files.
 
+    1. downsample from 2500Hz to 500Hz
+    2. flip inverted signal
+    """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
     save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # Boolean indicating if file already exists.
+    computed = save_path.exists()    # boolean indicating if file already exists
     if computed and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
@@ -37,7 +41,6 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
     ecg = raw.get_data(picks=ECG_CHANNELS).ravel()
     sfreq = raw.info["sfreq"]
 
-    # Raise AssertionError for unexpected sampling frequencies.
     assert sfreq == ECG_SFREQ_ORIGINAL, (f"Sampling frequency {sfreq} doesn't"
                                          " match expected sampling frequency"
                                          f" {ECG_SFREQ_ORIGINAL}.")
@@ -45,7 +48,7 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
     # Decimate the ECG from original sampling rate to 500 HZ.
     decimation_factor = int(np.floor(sfreq / ECG_SFREQ_DECIMATED))
     ecg_decimated = decimate_signal(ecg, decimation_factor)
-    # Flip the inverted ECG signal (around time axis).
+    # Flip the inverted ECG signal.
     ecg_inverted = invert_signal(ecg_decimated)
 
     pd.Series(ecg_inverted).to_csv(save_path, sep="\t", header=False,
@@ -68,11 +71,15 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
 
 
 def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
+    """Detect R-peaks in ECG.
 
+    1. Detect R-peaks
+    2. autocorrect artifacts in R-peaks detection.
+    """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
     save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # Boolean indicating if file already exists.
+    computed = save_path.exists()   # boolean indicating if file already exists
     if computed and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
@@ -109,11 +116,15 @@ def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
 
 
 def get_period_ecg(subject, inputs, outputs, recompute, logfile):
+    """Compute continuous heart period.
 
+    1. Compute inter-beat-intervals
+    2. Interpolate inter-beat-intervals to time series sampled at 4Hz.
+    """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
     save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # Boolean indicating if file already exists.
+    computed = save_path.exists()   # boolean indicating if file already exist.
     if computed and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return

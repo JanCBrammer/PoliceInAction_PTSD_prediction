@@ -19,11 +19,15 @@ from pia_ptsd_prediction.config import (BB_CHANNELS, BB_SFREQ_ORIGINAL,
 
 
 def preprocess_bb(subject, inputs, outputs, recompute, logfile):
+    """Preprocessing of raw balance board channels from BrainVision files.
 
+    1. downsample from 2500Hz to 20Hz
+    2. transform to millimeter unit (board displacement)
+    """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
     save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # Boolean indicating if file already exists.
+    computed = save_path.exists()   # boolean indicating if file already exists
     if computed and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
@@ -39,7 +43,6 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
     bb = raw.get_data(picks=BB_CHANNELS)
     sfreq = raw.info["sfreq"]
 
-    # Raise AssertionError for unexpected sampling frequencies.
     assert sfreq == BB_SFREQ_ORIGINAL, (f"Sampling frequency {sfreq} doesn't"
                                         " match expected sampling frequency"
                                         f" {BB_SFREQ_ORIGINAL}.")
@@ -64,7 +67,6 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
         begs, ends, n = consecutive_samples(bb_decimated[i, :],
                                             lambda x: x < bb_mins[i],
                                             min_duration)
-        # Raise if no chunk of min_duration has been found.
         assert begs.size > 0, (f"Did not find {BB_MIN_EMPTY} consecutive"
                                " seconds of empty board values.")
         # Find longest chunk and save its beginning and end.
@@ -132,7 +134,13 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
 
 
 def get_cop_bb(subject, inputs, outputs, recompute, logfile):
+    """Compute center of pressure time series.
 
+    1. combine preprocessed balance board channels to time series of anterior-
+    posterior (forth-back) displacement and medio-lateral (left-right)
+    discplacement
+    2. Filter displacement time series
+    """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
     save_path = Path(root).joinpath(f"{subject}/{filename}")
@@ -185,7 +193,13 @@ def get_cop_bb(subject, inputs, outputs, recompute, logfile):
 
 
 def get_sway_bb(subject, inputs, outputs, recompute, logfile):
+    """Compute body sway metrics.
 
+    1. anterior-posterior (back-forth) sway
+    2. medio-lateral (left-right) sway
+    3. sway radius
+    4. total sway path
+    """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
     save_path = Path(root).joinpath(f"{subject}/{filename}")
