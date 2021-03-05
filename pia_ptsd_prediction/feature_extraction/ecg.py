@@ -119,7 +119,7 @@ def get_period_ecg(subject, inputs, outputs, recompute, logfile):
     """Compute continuous heart period.
 
     1. Compute inter-beat-intervals
-    2. Interpolate inter-beat-intervals to time series sampled at 4Hz.
+    2. Interpolate inter-beat-intervals to time series sampled at ECG_PERIOD_SFREQ Hz.
     """
     root = outputs["save_path"][0]
     filename = individualize_filename(outputs["save_path"][1], subject)
@@ -142,7 +142,7 @@ def get_period_ecg(subject, inputs, outputs, recompute, logfile):
     period = np.ediff1d(peaks, to_begin=0) / ECG_SFREQ_DECIMATED * 1000    # make sure period has same number of elements as peaks
     period[0] = period[1]    # make sure that the first element has a realistic value
 
-    # Interpolate instantaneous heart period at 4 Hz. Interpolate up until the
+    # Interpolate instantaneous heart period at ECG_PERIOD_SFREQ Hz. Interpolate up until the
     # last R-peak.
     duration = peaks[-1] / ECG_SFREQ_DECIMATED    # in seconds
     nsamples = int(np.rint(duration * ECG_PERIOD_SFREQ))

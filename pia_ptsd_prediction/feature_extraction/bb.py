@@ -21,7 +21,7 @@ from pia_ptsd_prediction.config import (BB_CHANNELS, BB_SFREQ_ORIGINAL,
 def preprocess_bb(subject, inputs, outputs, recompute, logfile):
     """Preprocessing of raw balance board channels from BrainVision files.
 
-    1. downsample from 2500Hz to 20Hz
+    1. downsample from 2500Hz to 32Hz
     2. transform to millimeter unit (board displacement)
     """
     root = outputs["save_path"][0]
@@ -48,7 +48,7 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
                                         f" {BB_SFREQ_ORIGINAL}.")
 
     # Decimate the four balance board channels from original sampling rate to
-    # 20 HZ. Note that MNE's raw.apply_function() cannot be used since it
+    # BB_SFREQ_DECIMATED HZ. Note that MNE's raw.apply_function() cannot be used since it
     # requires the preservation of the original sampling frequency.
     decimation_factor = int(np.floor(sfreq / BB_SFREQ_DECIMATED))
     bb_decimated = decimate_signal(bb, decimation_factor)
