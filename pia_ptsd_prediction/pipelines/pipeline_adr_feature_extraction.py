@@ -7,13 +7,20 @@ All directories must exist (they are not instantiated in the pipeline).
 from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
 from pathlib import Path
-from pia_ptsd_prediction.feature_extraction import ecg, bb
+from pia_ptsd_prediction.feature_extraction import ecg, bb, events
 from pia_ptsd_prediction.config import DATADIR_RAW, DATADIR_PROCESSED, SUBJECTS
 
 
-SUBJECTS = SUBJECTS[:2]
+SUBJECTS = SUBJECTS[2:4]    # test pipeline on a subset
 
 pipeline = [
+
+    {"func": events.get_trial_info,
+     "subjects": SUBJECTS,
+     "inputs": {"log_path": [DATADIR_RAW, "shootingtask/events/PIA_w1_SH_dummy*.txt"],
+                "marker_path": [DATADIR_RAW, "shootingtask/physiology/*.vmrk"]},
+     "outputs": {"save_path": [DATADIR_PROCESSED, "adr/trial_info.tsv"]},
+     "recompute": True},
 
     {"func": ecg.preprocess_ecg,
      "subjects": SUBJECTS,
