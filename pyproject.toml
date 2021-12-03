@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "pia_ptsd_prediction"
+version = "0.0.1"
+description = "Analysis code repository."
+authors = ["Jan C. Brammer <jan.c.brammer@gmail.com>"]
+license = "MIT"
+exclude = ["preregistration", "literature", "data"]
+
+[tool.poetry.dependencies]
+python = "3.8.10"
+scipy = "^1.7.3"
+numpy = "^1.21.4"
+pandas = "^1.3.4"
+matplotlib = "^3.5.0"
+biopeaks = "^1.4.2"
+scikit-learn = "^1.0.1"
+mne = "^0.24.1"
+seaborn = "^0.11.2"
+
+[tool.poetry.scripts]
+extract_adr_features = "pia_ptsd_prediction.pipelines.pipeline_adr_feature_extraction:main"
+
+[build-system]
+requires = ["poetry_core==1.1.12"]
+build-backend = "poetry.core.masonry.api"

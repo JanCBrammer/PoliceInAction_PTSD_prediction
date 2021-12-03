@@ -4,9 +4,9 @@
 """
 
 # General ######################################################################
-ROOTDIR = "C:/Users/JohnDoe/surfdrive/gh_repos/PoliceInAction_PTSD_Prediction/data"
-DATADIR_RAW = "C:/Users/JohnDoe/surfdrive/gh_repos/PoliceInAction_PTSD_Prediction/data/raw"
-DATADIR_PROCESSED = "C:/Users/JohnDoe/surfdrive/gh_repos/PoliceInAction_PTSD_Prediction/data/processed"
+ROOTDIR = "./data"
+DATADIR_RAW = "./data/raw"
+DATADIR_PROCESSED = "./data/processed"
 SUBJECTS = [f"subj{str(i).zfill(3)}" for i in range(1, 428)]    # subjects 1 trough 427
 
 # ECG ##########################################################################
