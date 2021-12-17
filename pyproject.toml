@@ -16,6 +16,7 @@ biopeaks = "^1.4.2"
 scikit-learn = "^1.0.1"
 mne = "^0.24.1"
 seaborn = "^0.11.2"
+ipykernel = "^6.6.0"
 
 [tool.poetry.scripts]
 extract_adr_features = "pia_ptsd_prediction.pipelines.pipeline_adr_feature_extraction:main"

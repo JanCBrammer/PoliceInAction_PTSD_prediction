@@ -1,5 +1,7 @@
 ".pyc"
-__pycache__/
-data/
-preregistration/
-literature/
+__pycache__
+data
+preregistration
+literature
+.ipynb_checkpoints
+

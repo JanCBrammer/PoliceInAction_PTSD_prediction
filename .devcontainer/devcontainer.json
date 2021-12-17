@@ -14,7 +14,8 @@
 		"ms-python.python",
 		"robbowen.synthwave-vscode",
 		"ms-python.vscode-pylance",
-		"bungcip.better-toml"
+		"bungcip.better-toml",
+		"ms-toolsai.jupyter"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
