@@ -29,12 +29,10 @@ def get_trial_info(subject, inputs, outputs, recompute, logfile):
     root = inputs["log_path"][0]
     filename = inputs["log_path"][1]
     log_path = list(Path(root).joinpath(subject).glob(filename))
-    assert len(log_path) == 1, f"Found {len(log_path)} files: skipping {subject}"
 
     root = inputs["marker_path"][0]
     filename = inputs["marker_path"][1]
     marker_path = list(Path(root).joinpath(subject).glob(filename))
-    assert len(marker_path) == 1, f"Found {len(marker_path)} files: skipping {subject}"
 
     df_log = pd.read_csv(*log_path, sep="\t", usecols=["CSI", "shock"])
     markers = read_annotations(*marker_path, ECG_SFREQ_ORIGINAL)

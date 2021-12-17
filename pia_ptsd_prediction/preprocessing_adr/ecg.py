@@ -33,7 +33,6 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
-    assert len(physio_path) == 1, f"Found {len(physio_path)} files: skipping {subject}"
 
     raw = mne.io.read_raw_brainvision(*physio_path, preload=False, verbose="error")
     ecg = raw.get_data(picks=ECG_CHANNELS).ravel()
@@ -84,7 +83,6 @@ def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
-    assert len(physio_path) == 1, f"Found {len(physio_path)} files: skipping {subject}"
 
     ecg = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
     # Detect R-peaks.
@@ -127,7 +125,6 @@ def get_period_ecg(subject, inputs, outputs, recompute, logfile):
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
-    assert len(physio_path) == 1, f"Found {len(physio_path)} files: skipping {subject}"
 
     peaks = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
 
