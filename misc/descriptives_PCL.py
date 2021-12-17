@@ -11,7 +11,7 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-path = r'C:\Users\u117148\surfdrive\PIA_PTS\QuestionD_AllParticipSelect.xlsx'
+path = r'QuestionD_AllParticipSelect.xlsx'
 
 df = pd.read_excel(path, sheet_name='POL_coreTraumaW2W1',
                    usecols=['PCL_w1_Sum', 'PCL_w2_Sum', 'PCL_w2MINw1_sum',

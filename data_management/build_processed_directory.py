@@ -17,7 +17,7 @@ os.chdir("processed")
 # Define hierarchy of sub-directories in subject directory.
 level1 = ["adr", "tonic", "pcl", "caps"]
 level2 = [["ecg", "balanceboard"],
-          ["ecg"],
+          [],
           [],
           []]
 
