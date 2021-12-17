@@ -18,7 +18,7 @@ os.chdir("raw")
 tasks = ["shootingtask", "socialstress", "questionnaires"]
 
 # Define acquisitions.
-acquisitions = [["physiology", "events"], ["physiology"],
+acquisitions = [["physiology", "events"], [],
                 ["caps", "pcl"]]
 
 # Create sub-directory for each subject, containing the tasks and associated
