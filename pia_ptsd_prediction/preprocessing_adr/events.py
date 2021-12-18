@@ -9,7 +9,7 @@ from pia_ptsd_prediction.utils.io_utils import individualize_filename
 from pia_ptsd_prediction.config import ECG_SFREQ_ORIGINAL
 
 
-def get_trial_info(subject, inputs, outputs, recompute, logfile):
+def get_trial_info(subject, inputs, outputs, recompute, logpath):
     """Extract trial information from Presentation log files and BrainVision
     marker files.
 

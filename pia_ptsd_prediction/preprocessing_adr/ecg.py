@@ -16,7 +16,7 @@ from pia_ptsd_prediction.config import (ECG_CHANNELS, ECG_SFREQ_ORIGINAL,
                                         ECG_SFREQ_DECIMATED, ECG_PERIOD_SFREQ)
 
 
-def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
+def preprocess_ecg(subject, inputs, outputs, recompute, logpath):
     """Preprocessing of raw ECG from BrainVision files.
 
     1. downsample from 2500Hz to 500Hz
@@ -49,6 +49,9 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
 
     pd.Series(ecg_inverted).to_csv(save_path, sep="\t", header=False,
                                    index=False, float_format="%.4f")
+    
+    if not logpath:
+        return
 
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
     sec = np.linspace(0, len(ecg) / sfreq, len(ecg))
@@ -62,11 +65,12 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logfile):
     ax1.set_xlabel("seconds")
     ax1.legend(loc="upper right")
 
-    logfile.attach_note(f"{str(save_path)}")
-    logfile.savefig(fig)
+    fig.savefig(logpath, dpi=200)
+    plt.close(fig)
 
 
-def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
+
+def get_peaks_ecg(subject, inputs, outputs, recompute, logpath):
     """Detect R-peaks in ECG.
 
     1. Detect R-peaks
@@ -94,6 +98,9 @@ def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
     pd.Series(peaks_corrected).to_csv(save_path, sep="\t", header=False,
                                       index=False, float_format="%.4f")
 
+    if not logpath:
+        return
+    
     fig, ax = plt.subplots(nrows=1, ncols=1)
     sec = np.linspace(0, len(ecg) / ECG_SFREQ_DECIMATED, len(ecg))
     ax.plot(sec, ecg)
@@ -104,11 +111,11 @@ def get_peaks_ecg(subject, inputs, outputs, recompute, logfile):
     ax.set_xlabel("seconds")
     ax.legend(loc="upper right")
 
-    logfile.attach_note(f"{str(save_path)}")
-    logfile.savefig(fig)
+    fig.savefig(logpath, dpi=200)
+    plt.close(fig)
 
 
-def get_period_ecg(subject, inputs, outputs, recompute, logfile):
+def get_period_ecg(subject, inputs, outputs, recompute, logpath):
     """Compute continuous heart period.
 
     1. Compute inter-beat-intervals
@@ -141,6 +148,9 @@ def get_period_ecg(subject, inputs, outputs, recompute, logfile):
     pd.Series(period_interpolated).to_csv(save_path, sep="\t", header=False,
                                           index=False, float_format="%.6f")
 
+    if not logpath:
+        return
+    
     fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True)
     sec = np.linspace(0, duration, peaks[-1])
     ax.vlines(sec[peaks[:-1]], ymin=min(period), ymax=max(period),
@@ -152,5 +162,5 @@ def get_period_ecg(subject, inputs, outputs, recompute, logfile):
     ax.set_xlabel("seconds")
     ax.legend(loc="upper right")
 
-    logfile.attach_note(f"{str(save_path)}")
-    logfile.savefig(fig)
+    fig.savefig(logpath, dpi=200)
+    plt.close(fig)

@@ -18,7 +18,7 @@ from pia_ptsd_prediction.config import (BB_CHANNELS, BB_SFREQ_ORIGINAL,
                                         BB_MOVING_WINDOW)
 
 
-def preprocess_bb(subject, inputs, outputs, recompute, logfile):
+def preprocess_bb(subject, inputs, outputs, recompute, logpath):
     """Preprocessing of raw balance board channels from BrainVision files.
 
     1. downsample from 2500Hz to 32Hz
@@ -92,6 +92,9 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
                                  header=["BB1", "BB2", "BB3", "BB4"],    # transpose to change from channels as rows to channels as columns (preserves ordering of channels)
                                  index=False, float_format="%.4f")
 
+    if not logpath:
+        return
+
     fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1, sharex=True)
     sec = np.linspace(0, bb_decimated.shape[1] / BB_SFREQ_DECIMATED,
                       bb_decimated.shape[1])
@@ -126,11 +129,11 @@ def preprocess_bb(subject, inputs, outputs, recompute, logfile):
     ax2.set_xlabel("seconds")
     ax2.set_ylabel("millimeters")
 
-    logfile.attach_note(f"{str(save_path)}")
-    logfile.savefig(fig)
+    fig.savefig(logpath, dpi=200)
+    plt.close(fig)
 
 
-def get_cop_bb(subject, inputs, outputs, recompute, logfile):
+def get_cop_bb(subject, inputs, outputs, recompute, logpath):
     """Compute center of pressure time series.
 
     1. combine preprocessed balance board channels to time series of anterior-
@@ -164,6 +167,9 @@ def get_cop_bb(subject, inputs, outputs, recompute, logfile):
                   "ml_filt": ml_filt}).to_csv(save_path, sep="\t", header=True,
                                               index=False, float_format="%.4f")
 
+    if not logpath:
+        return
+        
     sec = np.linspace(0, bb.shape[0] / BB_SFREQ_DECIMATED, bb.shape[0])
     fig0, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
     ax0.plot(sec, ap, label="anterior-posterior displacement")
@@ -181,12 +187,14 @@ def get_cop_bb(subject, inputs, outputs, recompute, logfile):
     ax.set_xlabel("anterior-posterior displacenment (mm)")
     ax.set_ylabel("medio-lateral displacenment (mm)")
 
-    logfile.attach_note(f"{str(save_path)}")
-    logfile.savefig(fig0)
-    logfile.savefig(fig1)
+
+    fig0.savefig(logpath.joinpath("fig0"), dpi=200)
+    plt.close(fig0)
+    fig1.savefig(logpath.joinpath("fig1"), dpi=200)
+    plt.close(fig1)
 
 
-def get_sway_bb(subject, inputs, outputs, recompute, logfile):
+def get_sway_bb(subject, inputs, outputs, recompute, logpath):
     """Compute body sway metrics.
 
     1. anterior-posterior (back-forth) sway
@@ -238,6 +246,9 @@ def get_sway_bb(subject, inputs, outputs, recompute, logfile):
                   "path": total_path}).to_csv(save_path, sep="\t", header=True,
                                               index=False, float_format="%.4f")    # NaNs are saved as empty strings
 
+    if not logpath:
+        return
+        
     sec = cop.index / BB_SFREQ_DECIMATED
     fig0, ax = plt.subplots()
     ax.set_title(f"moving window of {BB_MOVING_WINDOW} seconds")
@@ -265,8 +276,11 @@ def get_sway_bb(subject, inputs, outputs, recompute, logfile):
     ax.set_title("Sway path length")
     ax.plot(sec, total_path)
 
-    logfile.attach_note(f"{str(save_path)}")
-    logfile.savefig(fig0)
-    logfile.savefig(fig1)
-    logfile.savefig(fig2)
-    logfile.savefig(fig3)
+    fig0.savefig(logpath.joinpath("fig0"), dpi=200)
+    plt.close(fig0)
+    fig1.savefig(logpath.joinpath("fig1"), dpi=200)
+    plt.close(fig1)
+    fig2.savefig(logpath.joinpath("fig2"), dpi=200)
+    plt.close(fig2)
+    fig3.savefig(logpath.joinpath("fig3"), dpi=200)
+    plt.close(fig3)
