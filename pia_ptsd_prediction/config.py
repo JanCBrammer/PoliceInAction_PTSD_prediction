@@ -39,9 +39,14 @@ ROOTDIR = "./data"
 DATADIR_RAW = "./data/raw"
 DATADIR_PROCESSED = "./data/processed"
 subjects = {f"subj{str(i).zfill(3)}" for i in range(1, 428)}    # subjects 1 trough 427
-subjects_invalid = find_invalid_subjects(DATADIR_RAW, subjects)
+subjects_invalid = set()
+if __name__ == "__main__":
+  with open(Path(DATADIR_RAW).joinpath("invalid_subjects.txt"), "w") as f:    # overwrites file if it exists
+    f.writelines(s + "\n" for s in find_invalid_subjects(DATADIR_RAW, subjects))
+with open(Path(DATADIR_RAW).joinpath("invalid_subjects.txt"), "r") as f:    # let it fail if file isn't there
+  subjects_invalid.update(f.read().splitlines())
 subjects_invalid.update(["subj095", "subj116", "subj117", "subj118",
-                         "subj136", "subj280", "subj291"])    # manually add subjects here who failed assertions during processing
+                         "subj136", "subj280", "subj291"])    # manually add subjects who failed assertions during processing
 SUBJECTS = sorted(list(subjects - subjects_invalid))
 
 # ECG ##########################################################################
