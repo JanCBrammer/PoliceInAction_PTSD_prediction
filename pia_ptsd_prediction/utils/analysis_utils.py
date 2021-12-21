@@ -72,7 +72,7 @@ def interpolate_signal(peaks, signal, nsamples):
     return signal_interpolated
 
 
-def consecutive_samples(signal, condition):
+def consecutive_samples(signal, condition, min_consecutives):
     """
     Parameters
     ----------
@@ -80,6 +80,9 @@ def consecutive_samples(signal, condition):
         The signal in which to evaluate condition.
     condition : lambda function
         The condition to evaluate.
+    min_consecutives : int
+        Minimal number of consecutive samples that need to fulfill the
+        condition.
     Returns
     -------
     begs : array
@@ -122,6 +125,11 @@ def consecutive_samples(signal, condition):
         # a single sample, that last chunk will be empty when indexed with
         # beg[-1]:end[-1].
         ends[-1] = idcs_bool.size - 1
+
+    idcs_min_consecutives = n >= min_consecutives
+    begs = begs[idcs_min_consecutives]
+    ends = ends[idcs_min_consecutives]
+    n = n[idcs_min_consecutives]
 
     return begs, ends, n
 
