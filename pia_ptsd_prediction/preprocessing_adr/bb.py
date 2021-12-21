@@ -187,10 +187,9 @@ def get_cop_bb(subject, inputs, outputs, recompute, logpath):
     ax.set_xlabel("anterior-posterior displacenment (mm)")
     ax.set_ylabel("medio-lateral displacenment (mm)")
 
-
-    fig0.savefig(logpath.joinpath("fig0"), dpi=200)
+    fig0.savefig(logpath.with_name(logpath.name + "_fig0"), dpi=200)
     plt.close(fig0)
-    fig1.savefig(logpath.joinpath("fig1"), dpi=200)
+    fig1.savefig(logpath.with_name(logpath.name + "_fig1"), dpi=200)
     plt.close(fig1)
 
 
@@ -276,11 +275,11 @@ def get_sway_bb(subject, inputs, outputs, recompute, logpath):
     ax.set_title("Sway path length")
     ax.plot(sec, total_path)
 
-    fig0.savefig(logpath.joinpath("fig0"), dpi=200)
+    fig0.savefig(logpath.with_name(logpath.name + "_fig0"), dpi=200)
     plt.close(fig0)
-    fig1.savefig(logpath.joinpath("fig1"), dpi=200)
+    fig1.savefig(logpath.with_name(logpath.name + "_fig1"), dpi=200)
     plt.close(fig1)
-    fig2.savefig(logpath.joinpath("fig2"), dpi=200)
+    fig2.savefig(logpath.with_name(logpath.name + "_fig2"), dpi=200)
     plt.close(fig2)
-    fig3.savefig(logpath.joinpath("fig3"), dpi=200)
+    fig3.savefig(logpath.with_name(logpath.name + "_fig3"), dpi=200)
     plt.close(fig3)
