@@ -45,8 +45,14 @@ if __name__ == "__main__":
     f.writelines(s + "\n" for s in find_invalid_subjects(DATADIR_RAW, subjects))
 with open(Path(DATADIR_RAW).joinpath("invalid_subjects.txt"), "r") as f:    # let it fail if file isn't there
   subjects_invalid.update(f.read().splitlines())
-subjects_invalid.update(["subj095", "subj116", "subj117", "subj118",
-                         "subj136", "subj280", "subj291"])    # manually add subjects who failed assertions during processing
+
+# Manually add subjects who failed assertions or visual inspections during processing.
+_subjects_invalid = {"headerfile_mismatch": ["subj095", "subj116", "subj117",
+                                             "subj118", "subj136",  "subj280"],    # failed assertion
+                     "no_empty_bb_section": ["subj147"],    # failed assertion
+                     "unusable_ecg": ["subj091", "subj119", "subj235", "subj243"],    # failed visual inspection
+                     "unequal_n_trials_bva_presentation": ["subj291"]}    # failed assertion
+subjects_invalid.update([s for l in _subjects_invalid.values() for s in l])
 SUBJECTS = sorted(list(subjects - subjects_invalid))
 
 # ECG ##########################################################################
