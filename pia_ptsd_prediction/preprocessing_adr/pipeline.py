@@ -34,6 +34,12 @@ def pipeline(SUBJECTS, DATADIR_RAW, DATADIR_PROCESSED):
      "outputs": {"save_path": [DATADIR_PROCESSED, "adr/ecg/ecg_period.tsv"]},
      "recompute": True},
 
+    {"func": ecg.remove_outliers_period_ecg,
+     "subjects": SUBJECTS,
+     "inputs": {"physio_path": [DATADIR_PROCESSED, "adr/ecg/*ecg_period.tsv"]},
+     "outputs": {"save_path": [DATADIR_PROCESSED, "adr/ecg/ecg_period_clean.tsv"]},
+     "recompute": True},
+
     {"func": bb.preprocess_bb,
      "subjects": SUBJECTS,
      "inputs": {"physio_path": [DATADIR_RAW, "shootingtask/physiology/*.vhdr"]},

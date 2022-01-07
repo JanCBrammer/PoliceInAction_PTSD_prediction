@@ -63,6 +63,10 @@ ECG_SFREQ_DECIMATED = 500    # Hz
 # not loose too much temporal precision during event-related analyses. See
 # `demo_influcence_sfreq_event_timing`.
 ECG_PERIOD_SFREQ = 16    # Hz
+HR_MIN = 35    # bpm
+HR_MAX = 185    # bpm
+MAD_THRESHOLD_MULTIPLIER = 4
+RUNNING_MEDIAN_KERNEL_SIZE = 120    # sec
 
 # Balance-board  ###############################################################
 BB_CHANNELS = ["BB1", "BB2", "BB3", "BB4"]

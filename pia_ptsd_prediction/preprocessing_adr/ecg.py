@@ -5,6 +5,8 @@ author: Jan C. Brammer <jan.c.brammer@gmail.com>
 import mne
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.ma as ma
+from numpy.ma.extras import count_masked
 import pandas as pd
 from pathlib import Path
 from biopeaks.heart import ecg_peaks, correct_peaks
@@ -15,7 +17,9 @@ from pia_ptsd_prediction.utils.analysis_utils import (invert_signal,
                                                       interpolate_signal)
 from pia_ptsd_prediction.utils.io_utils import individualize_filename
 from pia_ptsd_prediction.config import (ECG_CHANNELS, ECG_SFREQ_ORIGINAL,
-                                        ECG_SFREQ_DECIMATED, ECG_PERIOD_SFREQ)
+                                        ECG_SFREQ_DECIMATED, ECG_PERIOD_SFREQ,
+                                        HR_MIN, HR_MAX, RUNNING_MEDIAN_KERNEL_SIZE,
+                                        MAD_THRESHOLD_MULTIPLIER)
 
 
 def preprocess_ecg(subject, inputs, outputs, recompute, logpath):
@@ -170,39 +174,62 @@ def get_period_ecg(subject, inputs, outputs, recompute, logpath):
 
 def remove_outliers_period_ecg(subject, inputs, outputs, recompute, logpath):
     """Remove outliers from heart period series."""
+    root = outputs["save_path"][0]
+    filename = individualize_filename(outputs["save_path"][1], subject)
+    save_path = Path(root).joinpath(f"{subject}/{filename}")
+    computed = save_path.exists()   # boolean indicating if file already exist.
+    if computed and not recompute:    # only recompute if requested
+        print(f"Not re-computing {save_path}")
+        return
+
     root = inputs["physio_path"][0]
     filename = inputs["physio_path"][1]
     physio_path = list(Path(root).joinpath(subject).glob(filename))
 
     period = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
 
+    # Remove outliers based on absolute cutoffs. Those cutoffs have been chosen
+    # based on the visual inspection of all heart period time series data. The
+    # cutoffs have been set such that they preserve the data as much as possible
+    # (when in doubt don't flag a period as outlier).
+    min_period = 60000 / HR_MAX
+    max_period = 60000 / HR_MIN
+    abs_outliers = np.where((period < min_period) | (period > max_period))
+
+    # Median filter period with absolute outliers removed.
+    period_without_abs_outliers = period.copy()
+    period_without_abs_outliers[abs_outliers] = np.median(period)
+    kernel = int(np.rint(ECG_PERIOD_SFREQ * RUNNING_MEDIAN_KERNEL_SIZE))
+    if not kernel % 2: kernel += 1
+    period_trend = median_filter(period_without_abs_outliers, size=kernel)
+
+    # Remove outliers based on relative cutoffs.
+    rel_threshold = MAD_THRESHOLD_MULTIPLIER * median_absolute_deviation(period_without_abs_outliers)
+    upper_rel_threshold = period_trend + rel_threshold
+    lower_rel_threshold = period_trend - rel_threshold
+    period_masked_outliers = ma.masked_where((period < lower_rel_threshold) |
+                                             (period > upper_rel_threshold),
+                                             period)
+    assert period_masked_outliers.size == period.size
+
+    pd.Series(ma.filled(period_masked_outliers,
+                        fill_value=np.nan)).to_csv(save_path, sep="\t", header=False,
+                                                   index=False, float_format="%.6f",
+                                                   na_rep="NaN")
+
     if not logpath:
         return
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True)
+    fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
     sec = np.linspace(0, period.size / ECG_PERIOD_SFREQ, period.size)
+    ax0.plot(sec, period)
+    ax0.fill_between(sec, upper_rel_threshold, lower_rel_threshold,
+                     color="lime", alpha=.5)
+    ax0.plot(sec, period_trend, c="lime")
+    ax1.vlines(sec[period_masked_outliers.mask], period_masked_outliers.min(),
+               period_masked_outliers.max(), colors="fuchsia")
+    ax1.plot(sec, period_masked_outliers)
+    ax1.set_xlabel("seconds")
 
-    # z3 = np.polyfit(sec, period, 3)
-    # p3 = np.poly1d(z3)
-    # fit3 = p3(sec)
-    # ax.plot(sec, fit3, label=(f"polyfit 3"), c="lime")
-
-    kernel = int(np.rint(ECG_PERIOD_SFREQ * 180))
-    if not kernel % 2: kernel += 1
-    period_trend = median_filter(period, size=kernel)
-
-    artifact_threshold = 400
-    artifacts = np.where(np.abs(period) > period_trend + artifact_threshold)
-
-    ax.fill_between(sec, period_trend + artifact_threshold,
-                    period_trend - artifact_threshold, color="lime", alpha=.5)
-    ax.vlines(sec[artifacts], period.min(), period.max(),
-              colors="fuchsia", alpha=.5)
-
-    ax.plot(sec, period)
-    ax.plot(sec, period_trend, label=(f"median 30 seconds"), c="lime")
-    ax.set_xlabel("seconds")
-    ax.legend(loc="upper right")
-
-    fig.savefig(logpath, dpi=100)
+    fig.savefig(logpath, dpi=200)
     plt.close(fig)
