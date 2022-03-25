@@ -19,7 +19,7 @@ seaborn = "^0.11.2"
 ipykernel = "^6.6.0"
 
 [tool.poetry.scripts]
-extract_adr_features = "pia_ptsd_prediction.pipelines.pipeline_adr_feature_extraction:main"
+run_analysis = "pia_ptsd_prediction.run_analysis:main"
 
 [build-system]
 requires = ["poetry_core==1.1.12"]
