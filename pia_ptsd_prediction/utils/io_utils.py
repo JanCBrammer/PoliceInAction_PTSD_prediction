@@ -2,27 +2,11 @@
 author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
 
-from pathlib import Path
+def individualize_path(path: str, subject: str, expand_name=False) -> str:
+    """"""
+    path_elements = path.split("/")
+    path_elements.insert(2, subject)
+    if expand_name:
+        path_elements[-1] = f"{subject}_{path_elements[-1]}"
 
-
-def individualize_filename(path, subject):
-    """Prepend a subject ID to the filename.
-
-    Parameters
-    ----------
-    path : str
-        The path in which to individualize the filename.
-    subject : str
-        The subject ID.
-
-    Returns
-    -------
-    Path object
-        The path with individualized filename.
-    """
-    path = Path(path)
-    filename = path.name
-    subj_filename = f"{subject}_{filename}"
-    subj_path = path.parent.joinpath(subj_filename)
-
-    return subj_path
+    return "/".join(path_elements)

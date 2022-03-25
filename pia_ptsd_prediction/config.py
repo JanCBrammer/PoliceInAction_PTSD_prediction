@@ -35,9 +35,9 @@ def find_invalid_subjects(datadir, subjects, show_details=False):
 
 
 # General ######################################################################
-ROOTDIR = "./data"
-DATADIR_RAW = "./data/raw"
-DATADIR_PROCESSED = "./data/processed"
+ROOTDIR = "data"
+DATADIR_RAW = "data/raw"
+DATADIR_PROCESSED = "data/processed"
 subjects = {f"subj{str(i).zfill(3)}" for i in range(1, 428)}    # subjects 1 trough 427
 subjects_invalid = set()
 if __name__ == "__main__":

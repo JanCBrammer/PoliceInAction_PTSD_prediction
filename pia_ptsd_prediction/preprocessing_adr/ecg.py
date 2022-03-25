@@ -15,7 +15,7 @@ from scipy.ndimage import median_filter
 from pia_ptsd_prediction.utils.analysis_utils import (invert_signal,
                                                       decimate_signal,
                                                       interpolate_signal)
-from pia_ptsd_prediction.utils.io_utils import individualize_filename
+from pia_ptsd_prediction.utils.io_utils import individualize_path
 from pia_ptsd_prediction.config import (ECG_CHANNELS, ECG_SFREQ_ORIGINAL,
                                         ECG_SFREQ_DECIMATED, ECG_PERIOD_SFREQ,
                                         HR_MIN, HR_MAX, RUNNING_MEDIAN_KERNEL_SIZE,
@@ -28,19 +28,13 @@ def preprocess_ecg(subject, inputs, outputs, recompute, logpath):
     1. downsample from 2500Hz to 500Hz
     2. flip inverted signal
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()    # boolean indicating if file already exists
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    raw = mne.io.read_raw_brainvision(*physio_path, preload=False, verbose="error")
+    raw = mne.io.read_raw_brainvision(physio_path, preload=False, verbose="error")
     ecg = raw.get_data(picks=ECG_CHANNELS).ravel()
     sfreq = raw.info["sfreq"]
     assert sfreq == ECG_SFREQ_ORIGINAL, (f"Sampling frequency {sfreq} doesn't"
@@ -82,19 +76,13 @@ def get_peaks_ecg(subject, inputs, outputs, recompute, logpath):
     1. Detect R-peaks
     2. autocorrect artifacts in R-peaks detection.
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # boolean indicating if file already exists
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    ecg = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
+    ecg = np.ravel(pd.read_csv(physio_path, sep="\t", header=None))
     # Detect R-peaks.
     peaks = ecg_peaks(ecg, ECG_SFREQ_DECIMATED)
     # Correct artifacts in peak detection.
@@ -127,19 +115,13 @@ def get_period_ecg(subject, inputs, outputs, recompute, logpath):
     1. Compute inter-beat-intervals
     2. Interpolate inter-beat-intervals to time series sampled at ECG_PERIOD_SFREQ Hz.
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # boolean indicating if file already exist.
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    peaks = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
+    peaks = np.ravel(pd.read_csv(physio_path, sep="\t", header=None))
 
     # Compute period in milliseconds.
     period = np.ediff1d(peaks, to_begin=0) / ECG_SFREQ_DECIMATED * 1000    # make sure period has same number of elements as peaks
@@ -174,19 +156,13 @@ def get_period_ecg(subject, inputs, outputs, recompute, logpath):
 
 def remove_outliers_period_ecg(subject, inputs, outputs, recompute, logpath):
     """Remove outliers from heart period series."""
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # boolean indicating if file already exist.
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    period = np.ravel(pd.read_csv(*physio_path, sep="\t", header=None))
+    period = np.ravel(pd.read_csv(physio_path, sep="\t", header=None))
 
     # Remove outliers based on absolute cutoffs. Those cutoffs have been chosen
     # based on the visual inspection of all heart period time series data. The

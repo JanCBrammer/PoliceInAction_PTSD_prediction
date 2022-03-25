@@ -5,7 +5,7 @@ author: Jan C. Brammer <jan.c.brammer@gmail.com>
 import pandas as pd
 from pathlib import Path
 from mne.annotations import read_annotations
-from pia_ptsd_prediction.utils.io_utils import individualize_filename
+from pia_ptsd_prediction.utils.io_utils import individualize_path
 from pia_ptsd_prediction.config import ECG_SFREQ_ORIGINAL
 
 
@@ -18,24 +18,15 @@ def get_trial_info(subject, inputs, outputs, recompute, logpath):
     3. cue (seconds)
     4. stimulus (seconds)
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # boolean indicating if file already exists
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    log_path = next(Path(".").glob(individualize_path(inputs["log_path"], subject)))
+    marker_path = next(Path(".").glob(individualize_path(inputs["marker_path"], subject)))
 
-    root = inputs["log_path"][0]
-    filename = inputs["log_path"][1]
-    log_path = list(Path(root).joinpath(subject).glob(filename))
-
-    root = inputs["marker_path"][0]
-    filename = inputs["marker_path"][1]
-    marker_path = list(Path(root).joinpath(subject).glob(filename))
-
-    df_log = pd.read_csv(*log_path, sep="\t", usecols=["CSI", "shock"])
-    markers = read_annotations(*marker_path, ECG_SFREQ_ORIGINAL)
+    df_log = pd.read_csv(log_path, sep="\t", usecols=["CSI", "shock"])
+    markers = read_annotations(marker_path, ECG_SFREQ_ORIGINAL)
     cues = markers.onset[markers.description == "Stimulus/S  2"]
     assert len(cues) == df_log.shape[0], ("Unequal number of trials between"
                                           " BrainVision and Presentation files"

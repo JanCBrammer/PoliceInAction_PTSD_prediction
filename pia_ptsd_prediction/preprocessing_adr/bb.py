@@ -11,7 +11,7 @@ from biopeaks.filters import butter_bandpass_filter
 from pia_ptsd_prediction.utils.analysis_utils import (decimate_signal,
                                                       consecutive_samples,
                                                       cop_radius)
-from pia_ptsd_prediction.utils.io_utils import individualize_filename
+from pia_ptsd_prediction.utils.io_utils import individualize_path
 from pia_ptsd_prediction.config import (BB_CHANNELS, BB_SFREQ_ORIGINAL,
                                         BB_SFREQ_DECIMATED, BB_MIN_EMPTY,
                                         BB_BOARDLENGTH, BB_FILTER_CUTOFFS,
@@ -24,19 +24,13 @@ def preprocess_bb(subject, inputs, outputs, recompute, logpath):
     1. downsample from 2500Hz to 32Hz
     2. transform to millimeter unit (board displacement)
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # boolean indicating if file already exists
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    raw = mne.io.read_raw_brainvision(*physio_path, preload=False, verbose="error")
+    raw = mne.io.read_raw_brainvision(physio_path, preload=False, verbose="error")
     bb = raw.get_data(picks=BB_CHANNELS)
     sfreq = raw.info["sfreq"]
 
@@ -141,19 +135,13 @@ def get_cop_bb(subject, inputs, outputs, recompute, logpath):
     discplacement
     2. Filter displacement time series
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # Boolean indicating if file already exists.
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    bb = pd.read_csv(*physio_path, sep="\t", header=0).to_numpy()
+    bb = pd.read_csv(physio_path, sep="\t", header=0).to_numpy()
 
     ap = (bb[:, 2] + bb[:, 3]) - (bb[:, 0] + bb[:, 1])    # anterior-posterior displacement
     ml = (bb[:, 0] + bb[:, 3]) - (bb[:, 1] + bb[:, 2])    # medio-lateral displacement
@@ -169,7 +157,7 @@ def get_cop_bb(subject, inputs, outputs, recompute, logpath):
 
     if not logpath:
         return
-        
+
     sec = np.linspace(0, bb.shape[0] / BB_SFREQ_DECIMATED, bb.shape[0])
     fig0, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
     ax0.plot(sec, ap, label="anterior-posterior displacement")
@@ -201,37 +189,31 @@ def get_sway_bb(subject, inputs, outputs, recompute, logpath):
     3. sway radius
     4. total sway path
     """
-    root = outputs["save_path"][0]
-    filename = individualize_filename(outputs["save_path"][1], subject)
-    save_path = Path(root).joinpath(f"{subject}/{filename}")
-    computed = save_path.exists()   # Boolean indicating if file already exists.
-    if computed and not recompute:    # only recompute if requested
+    save_path = Path(individualize_path(outputs["save_path"], subject, expand_name=True))
+    if save_path.exists() and not recompute:    # only recompute if requested
         print(f"Not re-computing {save_path}")
         return
+    physio_path = next(Path(".").glob(individualize_path(inputs["physio_path"], subject)))
 
-    root = inputs["physio_path"][0]
-    filename = inputs["physio_path"][1]
-    physio_path = list(Path(root).joinpath(subject).glob(filename))
-
-    cop = pd.read_csv(*physio_path, sep="\t", header=0)
+    cop = pd.read_csv(physio_path, sep="\t", header=0)
 
     n_samples = int(np.rint(BB_MOVING_WINDOW * BB_SFREQ_DECIMATED))    # width of rolling window in samples
 
     # Compute body sway.
     ap_sway = cop.loc[:, "ap_filt"].rolling(window=n_samples,
-                                            min_periods=n_samples,
+                                            min_periods=1,
                                             center=True).std()
     ml_sway = cop.loc[:, "ml_filt"].rolling(window=n_samples,
-                                            min_periods=n_samples,
+                                            min_periods=1,
                                             center=True).std()
 
     # Compute moving average of the center-of-pressure's radial displacement.
-    cop_avg = cop.rolling(window=n_samples, min_periods=n_samples,
+    cop_avg = cop.rolling(window=n_samples, min_periods=1,
                           center=True).mean()
     cop_demeaned = cop - cop_avg
 
     radius = cop_demeaned.loc[:, "ap_filt"].combine(cop_demeaned.loc[:, "ml_filt"], cop_radius)
-    radius_avg = radius.rolling(window=n_samples, min_periods=n_samples,
+    radius_avg = radius.rolling(window=n_samples, min_periods=1,
                                 center=True).mean()
 
     # Compute sway path.
@@ -247,7 +229,7 @@ def get_sway_bb(subject, inputs, outputs, recompute, logpath):
 
     if not logpath:
         return
-        
+
     sec = cop.index / BB_SFREQ_DECIMATED
     fig0, ax = plt.subplots()
     ax.set_title(f"moving window of {BB_MOVING_WINDOW} seconds")
@@ -260,8 +242,9 @@ def get_sway_bb(subject, inputs, outputs, recompute, logpath):
     fig1, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
     ax0.set_title("COP")
     ax1.set_title(f"COP demeaned with moving window of {BB_MOVING_WINDOW} seconds")
-    ax0.plot(sec, cop)
-    ax1.plot(sec, cop_demeaned)
+
+    cop.set_index(sec).plot(ax=ax0)
+    cop_demeaned.set_index(sec).plot(ax=ax0)
 
     fig2, ax = plt.subplots()
     ax.plot(sec, radius, label="radial displacement of COP")
