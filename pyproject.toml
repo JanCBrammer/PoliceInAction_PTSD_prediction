@@ -17,6 +17,9 @@ scikit-learn = "^1.0.1"
 mne = "^0.24.1"
 seaborn = "^0.11.2"
 ipykernel = "^6.6.0"
+black = "^22.1.0"
+flake8 = "^4.0.1"
+ipympl = "^0.8.8"
 
 [tool.poetry.scripts]
 run_analysis = "pia_ptsd_prediction.run_analysis:main"
