@@ -8,7 +8,7 @@ import numpy as np
 import numpy.ma as ma
 import pandas as pd
 from pathlib import Path
-from biopeaks.heart import ecg_peaks, correct_peaks
+from biopeaks.heart import correct_peaks
 from scipy.stats import median_absolute_deviation
 from scipy.ndimage import median_filter
 from pia_ptsd_prediction.utils.analysis_utils import (
@@ -19,12 +19,10 @@ from pia_ptsd_prediction.utils.analysis_utils import (
 from pia_ptsd_prediction.utils.io_utils import individualize_path
 
 
-def preprocess_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwargs):
-    """Preprocessing of raw ECG from BrainVision files.
-
-    1. downsample
-    2. flip inverted signal
-    """
+def preprocess_heart_signal(
+    subject, condition, inputs, outputs, recompute, logpath, **kwargs
+):
+    """Preprocessing of raw signals from BrainVision files."""
     save_path = Path(individualize_path(outputs["save_path"], subject, condition))
     if save_path.exists() and not recompute:  # only recompute if requested
         print(f"Not re-computing {save_path}")
@@ -36,9 +34,10 @@ def preprocess_ecg(subject, condition, inputs, outputs, recompute, logpath, **kw
     chans = kwargs["chans"]
     sfreq_original = kwargs["sfreq_original"]
     sfreq_decimated = kwargs["sfreq_decimated"]
+    invert = kwargs["invert_signal"]
 
     raw = mne.io.read_raw_brainvision(physio_path, preload=False, verbose="error")
-    ecg = raw.get_data(picks=chans).ravel()
+    heart_signal = raw.get_data(picks=chans).ravel()
     sfreq = raw.info["sfreq"]
     assert sfreq == sfreq_original, (
         f"Sampling frequency {sfreq} doesn't"
@@ -46,13 +45,12 @@ def preprocess_ecg(subject, condition, inputs, outputs, recompute, logpath, **kw
         f" {sfreq_original}."
     )
 
-    # Decimate the ECG from original sampling rate to 500 HZ.
     decimation_factor = int(np.floor(sfreq / sfreq_decimated))
-    ecg_decimated = decimate_signal(ecg, decimation_factor)
-    # Flip the inverted ECG signal.
-    ecg_inverted = invert_signal(ecg_decimated)
+    heart_signal_decimated = decimate_signal(heart_signal, decimation_factor)
+    if invert:
+        heart_signal_decimated = invert_signal(heart_signal_decimated)
 
-    pd.Series(ecg_inverted).to_csv(
+    pd.Series(heart_signal_decimated).to_csv(
         save_path, sep="\t", header=False, index=False, float_format="%.4f"
     )
 
@@ -60,13 +58,18 @@ def preprocess_ecg(subject, condition, inputs, outputs, recompute, logpath, **kw
         return
 
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1, sharex=True)
-    sec = np.linspace(0, len(ecg) / sfreq, len(ecg))
-    ax0.plot(sec, ecg, label=f"original ({sfreq}Hz)")
+    sec = np.linspace(0, len(heart_signal) / sfreq, len(heart_signal))
+    ax0.plot(sec, heart_signal, label=f"original ({sfreq}Hz)")
     ax0.set_xlabel("seconds")
     ax0.legend(loc="upper right")
-    sec = np.linspace(0, len(ecg_decimated) / sfreq_decimated, len(ecg_decimated))
-    ax1.plot(sec, ecg_decimated, label=f"downsampled ({sfreq_decimated}Hz)")
-    ax1.plot(sec, ecg_inverted, label=f"flipped ({sfreq_decimated}Hz)")
+    sec = np.linspace(
+        0, len(heart_signal_decimated) / sfreq_decimated, len(heart_signal_decimated)
+    )
+    ax1.plot(
+        sec,
+        heart_signal_decimated,
+        label=f"downsampled and inverted ({sfreq_decimated}Hz)",
+    )
     ax1.set_xlabel("seconds")
     ax1.legend(loc="upper right")
 
@@ -74,14 +77,10 @@ def preprocess_ecg(subject, condition, inputs, outputs, recompute, logpath, **kw
     plt.close(fig)
 
 
-def get_peaks_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwargs):
-    """Detect R-peaks in ECG.
-
-    1. Detect R-peaks
-    2. autocorrect artifacts in R-peaks detection.
-    """
+def get_heart_peaks(subject, condition, inputs, outputs, recompute, logpath, **kwargs):
+    """Detect systolic or R-peaks in PPG or ECG respectively."""
     save_path = Path(individualize_path(outputs["save_path"], subject, condition))
-    if save_path.exists() and not recompute:  # only recompute if requested
+    if save_path.exists() and not recompute:
         print(f"Not re-computing {save_path}")
         return
     physio_path = next(
@@ -89,13 +88,11 @@ def get_peaks_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwa
     )
 
     sfreq_decimated = kwargs["sfreq_decimated"]
+    peak_detector = kwargs["detector"]
 
-    ecg = np.ravel(pd.read_csv(physio_path, sep="\t", header=None))
-    # Detect R-peaks.
-    peaks = ecg_peaks(ecg, sfreq_decimated)
-    # Correct artifacts in peak detection.
+    heart_signal = np.ravel(pd.read_csv(physio_path, sep="\t", header=None))
+    peaks = peak_detector(heart_signal, sfreq_decimated)
     peaks_corrected = correct_peaks(peaks, sfreq_decimated, iterative=True)
-    # Save peaks as samples.
     pd.Series(peaks_corrected).to_csv(
         save_path, sep="\t", header=False, index=False, float_format="%.4f"
     )
@@ -104,11 +101,11 @@ def get_peaks_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwa
         return
 
     fig, ax = plt.subplots(nrows=1, ncols=1)
-    sec = np.linspace(0, len(ecg) / sfreq_decimated, len(ecg))
-    ax.plot(sec, ecg)
+    sec = np.linspace(0, len(heart_signal) / sfreq_decimated, len(heart_signal))
+    ax.plot(sec, heart_signal)
     ax.scatter(
         sec[peaks],
-        ecg[peaks],
+        heart_signal[peaks],
         zorder=3,
         c="r",
         marker="+",
@@ -117,7 +114,7 @@ def get_peaks_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwa
     )
     ax.scatter(
         sec[peaks_corrected],
-        ecg[peaks_corrected],
+        heart_signal[peaks_corrected],
         zorder=4,
         c="g",
         marker="x",
@@ -131,14 +128,14 @@ def get_peaks_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwa
     plt.close(fig)
 
 
-def get_period_ecg(subject, condition, inputs, outputs, recompute, logpath, **kwargs):
+def get_heart_period(subject, condition, inputs, outputs, recompute, logpath, **kwargs):
     """Compute continuous heart period.
 
     1. Compute inter-beat-intervals
-    2. Interpolate inter-beat-intervals to time series sampled at ECG_PERIOD_SFREQ Hz.
+    2. Interpolate inter-beat-intervals to time series sampled at PERIOD_SFREQ Hz.
     """
     save_path = Path(individualize_path(outputs["save_path"], subject, condition))
-    if save_path.exists() and not recompute:  # only recompute if requested
+    if save_path.exists() and not recompute:
         print(f"Not re-computing {save_path}")
         return
     physio_path = next(
@@ -156,8 +153,8 @@ def get_period_ecg(subject, condition, inputs, outputs, recompute, logpath, **kw
     )  # make sure period has same number of elements as peaks
     period[0] = period[1]  # make sure that the first element has a realistic value
 
-    # Interpolate instantaneous heart period at ECG_PERIOD_SFREQ Hz. Interpolate up until the
-    # last R-peak.
+    # Interpolate instantaneous heart period at PERIOD_SFREQ Hz. Interpolate up until the
+    # last peak.
     duration = peaks[-1] / sfreq_decimated  # in seconds
     nsamples = int(np.rint(duration * sfreq_period))
     period_interpolated = interpolate_signal(peaks, period, nsamples)
@@ -192,12 +189,12 @@ def get_period_ecg(subject, condition, inputs, outputs, recompute, logpath, **kw
     plt.close(fig)
 
 
-def remove_outliers_period_ecg(
+def remove_outliers_heart_period(
     subject, condition, inputs, outputs, recompute, logpath, **kwargs
 ):
     """Remove outliers from heart period series."""
     save_path = Path(individualize_path(outputs["save_path"], subject, condition))
-    if save_path.exists() and not recompute:  # only recompute if requested
+    if save_path.exists() and not recompute:
         print(f"Not re-computing {save_path}")
         return
     physio_path = next(

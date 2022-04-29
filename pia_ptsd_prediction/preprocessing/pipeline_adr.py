@@ -3,7 +3,7 @@ author: Jan C. Brammer <jan.c.brammer@gmail.com>
 """
 
 from pia_ptsd_prediction.utils.pipeline_utils import Task
-from pia_ptsd_prediction.preprocessing import ecg, bb, events
+from pia_ptsd_prediction.preprocessing import heart, bb, events
 from pia_ptsd_prediction.config import (
     DATADIR_RAW,
     DATADIR_PROCESSED,
@@ -11,7 +11,7 @@ from pia_ptsd_prediction.config import (
     ECG_CHANNELS_ADR,
     ECG_SFREQ_ORIGINAL_ADR,
     ECG_SFREQ_DECIMATED,
-    ECG_PERIOD_SFREQ,
+    HEART_PERIOD_SFREQ,
     HR_MIN,
     HR_MAX,
     RUNNING_MEDIAN_KERNEL_SIZE,
@@ -24,6 +24,7 @@ from pia_ptsd_prediction.config import (
     BB_FILTER_CUTOFFS,
     BB_MOVING_WINDOW,
 )
+from biopeaks.heart import ecg_peaks
 
 SUBJECTS = SUBJECTS[:2]
 
@@ -44,11 +45,12 @@ pipeline = [
         subjects=SUBJECTS,
     ),
     Task(
-        ecg.preprocess_ecg,
+        heart.preprocess_heart_signal,
         {
             "chans": ECG_CHANNELS_ADR,
             "sfreq_original": ECG_SFREQ_ORIGINAL_ADR,
             "sfreq_decimated": ECG_SFREQ_DECIMATED,
+            "invert_signal": True,
         },
         inputs={
             "physio_path": f"{DATADIR_RAW}/<SUBJECT>/shootingtask/physiology/*.vhdr"
@@ -60,8 +62,8 @@ pipeline = [
         logdir=f"{DATADIR_PROCESSED}/logs",
     ),
     Task(
-        ecg.get_peaks_ecg,
-        {"sfreq_decimated": ECG_SFREQ_DECIMATED},
+        heart.get_heart_peaks,
+        {"sfreq_decimated": ECG_SFREQ_DECIMATED, "detector": ecg_peaks},
         inputs={
             "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/*_ecg_clean.tsv"
         },
@@ -72,9 +74,9 @@ pipeline = [
         logdir=f"{DATADIR_PROCESSED}/logs",
     ),
     Task(
-        ecg.get_period_ecg,
+        heart.get_heart_period,
         {
-            "sfreq_period": ECG_PERIOD_SFREQ,
+            "sfreq_period": HEART_PERIOD_SFREQ,
             "sfreq_decimated": ECG_SFREQ_DECIMATED,
         },
         inputs={
@@ -87,9 +89,9 @@ pipeline = [
         logdir=f"{DATADIR_PROCESSED}/logs",
     ),
     Task(
-        ecg.remove_outliers_period_ecg,
+        heart.remove_outliers_heart_period,
         {
-            "sfreq_period": ECG_PERIOD_SFREQ,
+            "sfreq_period": HEART_PERIOD_SFREQ,
             "hr_min": HR_MIN,
             "hr_max": HR_MAX,
             "running_median_kernel_size": RUNNING_MEDIAN_KERNEL_SIZE,

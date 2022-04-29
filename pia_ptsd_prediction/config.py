@@ -94,15 +94,19 @@ subjects_invalid.update([s for l in _subjects_invalid.values() for s in l])
 SUBJECTS = sorted(list(subjects - subjects_invalid))
 CONDITIONS_TONIC = ["RS1", "RS2", "SECPT"]
 
-# ECG ##########################################################################
+# HEART ########################################################################
 ECG_CHANNELS_ADR = ["ECG"]
-ECG_SFREQ_ORIGINAL_ADR = 2500
+PPG_CHANNELS_TONIC = ["HR"]
+
+ECG_SFREQ_ORIGINAL_ADR = 2500  # Hz
+PPG_SFREQ_ORIGINAL_TONIC = 5000  # Hz
 
 ECG_SFREQ_DECIMATED = 500  # Hz
+PPG_SFREQ_DECIMATED = 32  # Hz
 # The sampling frequency of the heart period must not be too low in order to
-# not loose too much temporal precision during event-related analyses. See
-# `demo_influcence_sfreq_event_timing`.
-ECG_PERIOD_SFREQ = 16  # Hz
+# not loose too much temporal precision during event-related, and HRV analyses.
+# See `demo_influcence_sfreq_event_timing` and https://doi.org/10.1088/1361-6579/aa5efa.
+HEART_PERIOD_SFREQ = 32  # Hz
 HR_MIN = 35  # bpm
 HR_MAX = 185  # bpm
 MAD_THRESHOLD_MULTIPLIER = 4
