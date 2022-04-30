@@ -1,6 +1,6 @@
-FROM python:3.8.10
+FROM python:3.10
 
-RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.1.12
+RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.1.13
 
 ENV PATH /root/.local/bin:$PATH
 
