@@ -35,7 +35,7 @@ pipeline = [
             "physio_path": f"{DATADIR_RAW}/<SUBJECT>/socialstress/physiology/*<CONDITION>*.vhdr"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/<SUBJECT>_<CONDITION>_ppg_clean.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/<SUBJECT>_<CONDITION>_ppg_clean.tsv"
         },
         subjects=SUBJECTS,
         conditions=CONDITIONS_TONIC,
@@ -45,10 +45,10 @@ pipeline = [
         heart.get_heart_peaks,
         {"sfreq_decimated": PPG_SFREQ_DECIMATED, "detector": ppg_peaks},
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/*<CONDITION>_ppg_clean.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/*<CONDITION>_ppg_clean.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/<SUBJECT>_<CONDITION>_ppg_peaks.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/<SUBJECT>_<CONDITION>_ppg_peaks.tsv"
         },
         subjects=SUBJECTS,
         conditions=CONDITIONS_TONIC,
@@ -61,10 +61,10 @@ pipeline = [
             "sfreq_decimated": PPG_SFREQ_DECIMATED,
         },
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/*<CONDITION>_ppg_peaks.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/*<CONDITION>_ppg_peaks.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/<SUBJECT>_<CONDITION>_ppg_period.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/<SUBJECT>_<CONDITION>_ppg_period.tsv"
         },
         subjects=SUBJECTS,
         conditions=CONDITIONS_TONIC,
@@ -80,10 +80,10 @@ pipeline = [
             "mad_threshold_multiplier": MAD_THRESHOLD_MULTIPLIER,
         },
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/*<CONDITION>_ppg_period.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/*<CONDITION>_ppg_period.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/tonic/ecg/<SUBJECT>_<CONDITION>_ppg_period_clean.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/socialstress/ppg/<SUBJECT>_<CONDITION>_ppg_period_clean.tsv"
         },
         subjects=SUBJECTS,
         conditions=CONDITIONS_TONIC,

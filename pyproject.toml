@@ -22,6 +22,9 @@ flake8 = "^4.0.1"
 ipympl = "^0.8.8"
 
 [tool.poetry.scripts]
+build_processed_dir = "data_management.processed_directory:build_processed_dir"
+clean_processed_dir = "data_management.processed_directory:clean_processed_dir"
+clean_logs_dir = "data_management.processed_directory:clean_logs_dir"
 run_analysis = "pia_ptsd_prediction.run_analysis:main"
 
 [build-system]

@@ -40,7 +40,7 @@ pipeline = [
             "marker_path": f"{DATADIR_RAW}/<SUBJECT>/shootingtask/physiology/*.vmrk",
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/<SUBJECT>_trial_info.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/<SUBJECT>_trial_info.tsv"
         },
         subjects=SUBJECTS,
     ),
@@ -56,7 +56,7 @@ pipeline = [
             "physio_path": f"{DATADIR_RAW}/<SUBJECT>/shootingtask/physiology/*.vhdr"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/<SUBJECT>_ecg_clean.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/<SUBJECT>_ecg_clean.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
@@ -65,10 +65,10 @@ pipeline = [
         heart.get_heart_peaks,
         {"sfreq_decimated": ECG_SFREQ_DECIMATED, "detector": ecg_peaks},
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/*_ecg_clean.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/*_ecg_clean.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/<SUBJECT>_ecg_peaks.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/<SUBJECT>_ecg_peaks.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
@@ -80,10 +80,10 @@ pipeline = [
             "sfreq_decimated": ECG_SFREQ_DECIMATED,
         },
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/*_ecg_peaks.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/*_ecg_peaks.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/<SUBJECT>_ecg_period.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/<SUBJECT>_ecg_period.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
@@ -98,10 +98,10 @@ pipeline = [
             "mad_threshold_multiplier": MAD_THRESHOLD_MULTIPLIER,
         },
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/*_ecg_period.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/*_ecg_period.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/ecg/<SUBJECT>_ecg_period_clean.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/ecg/<SUBJECT>_ecg_period_clean.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
@@ -119,7 +119,7 @@ pipeline = [
             "physio_path": f"{DATADIR_RAW}/<SUBJECT>/shootingtask/physiology/*.vhdr"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/balanceboard/<SUBJECT>_bb_clean.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/balanceboard/<SUBJECT>_bb_clean.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
@@ -131,10 +131,10 @@ pipeline = [
             "filter_cutoffs": BB_FILTER_CUTOFFS,
         },
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/balanceboard/*bb_clean.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/balanceboard/*bb_clean.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/balanceboard/<SUBJECT>_bb_cop.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/balanceboard/<SUBJECT>_bb_cop.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
@@ -146,10 +146,10 @@ pipeline = [
             "moving_window": BB_MOVING_WINDOW,
         },
         inputs={
-            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/balanceboard/*bb_cop.tsv"
+            "physio_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/balanceboard/*bb_cop.tsv"
         },
         outputs={
-            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/adr/balanceboard/<SUBJECT>_bb_bodysway.tsv"
+            "save_path": f"{DATADIR_PROCESSED}/<SUBJECT>/shootingtask/balanceboard/<SUBJECT>_bb_bodysway.tsv"
         },
         subjects=SUBJECTS,
         logdir=f"{DATADIR_PROCESSED}/logs",
